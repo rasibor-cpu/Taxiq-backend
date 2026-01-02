@@ -1,0 +1,24 @@
+{
+  "name": "taxiq-backend",
+  "version": "1.0.0",
+  "description": "Authoritative backend repository for the TaxIQ platform.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rasibor-cpu/Taxiq-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/rasibor-cpu/Taxiq-backend/issues"
+  },
+  "homepage": "https://github.com/rasibor-cpu/Taxiq-backend#readme",
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.14"
+  }
+}
