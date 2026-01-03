@@ -1,5 +1,6 @@
-import { calculatePAYEViews } from "../engine/payeView.js";
+import { calculatePAYE } from "../engine/taxEngine.js";
 
 export function demo() {
-  return calculatePAYEViews(3000000);
+  const annualIncome = 3_000_000;
+  return calculatePAYE(annualIncome);
 }
