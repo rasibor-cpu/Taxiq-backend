@@ -1,6 +1,5 @@
-import { runPAYE } from "../modules/paye/paye.js";
+import { calculatePAYEViews } from "../engine/payeView.js";
 
 export function demo() {
-  const sample = runPAYE({ annualIncome: 3000000 });
-  return sample;
+  return calculatePAYEViews(3000000);
 }

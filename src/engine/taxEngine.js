@@ -1,55 +1,46 @@
+// src/engine/taxEngine.js
+
 import { PAYE_BANDS, CONSOLIDATED_RELIEF } from "../data/constants.js";
 
 export function calculatePAYE(annualIncome) {
-  const income = Number(annualIncome);
+  // --- Consolidated Relief ---
+  const reliefByPercent = Math.round(
+    annualIncome * CONSOLIDATED_RELIEF.percentage
+  );
 
-  if (!Number.isFinite(income) || income <= 0) {
-    return {
-      annualIncome: income,
-      relief: 0,
-      taxableIncome: 0,
-      tax: 0,
-      breakdown: []
-    };
-  }
-
-  const relief =
-    CONSOLIDATED_RELIEF.fixed +
-    CONSOLIDATED_RELIEF.percentage * income;
-
-  const taxableIncome = Math.max(income - relief, 0);
+  const relief = Math.max(reliefByPercent, CONSOLIDATED_RELIEF.minimum);
+  const taxableIncome = Math.max(0, annualIncome - relief);
 
   let remaining = taxableIncome;
-  let tax = 0;
+  let totalTax = 0;
+  let bandFrom = 0;
+
   const breakdown = [];
 
-  let prevCap = 0;
   for (const band of PAYE_BANDS) {
     if (remaining <= 0) break;
 
-    // Each band.limit here is treated as "band width" for now (scaffold).
-    // We will refine to exact statutory band widths next iteration.
-    const amount = band.limit === Infinity ? remaining : Math.min(remaining, band.limit);
+    const bandAmount = Math.min(remaining, band.limit);
+    const bandTax = Math.round(bandAmount * band.rate);
 
-    const bandTax = amount * band.rate;
     breakdown.push({
-      bandFrom: prevCap,
-      bandTo: band.limit === Infinity ? "Infinity" : prevCap + amount,
-      amount,
+      bandFrom,
+      bandTo: band.limit === Infinity ? null : bandFrom + bandAmount,
+      amount: bandAmount,
       rate: band.rate,
       tax: bandTax
     });
 
-    tax += bandTax;
-    remaining -= amount;
-    prevCap += amount;
+    totalTax += bandTax;
+    remaining -= bandAmount;
+    bandFrom += bandAmount;
   }
 
   return {
-    annualIncome: income,
+    annualIncome,
     relief,
     taxableIncome,
-    tax,
+    tax: totalTax,
     breakdown
   };
 }
