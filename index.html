@@ -3,124 +3,203 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TaxIQ — Nigerian tax calculator (PAYE v1)</title>
   <meta name="theme-color" content="#0b1220" />
-  <title>TaxIQ — Nigerian Tax Calculator</title>
-
   <style>
     :root{
-      --bg:#0b1220;
-      --card:#0f1b33;
-      --text:#e8eefc;
-      --muted:#a9b7d1;
-      --line:rgba(232,238,252,.12);
-      --accent:#5aa7ff;
+      --bg:#0b1220; --card:#0f1a2e; --border:rgba(232,238,252,.14);
+      --text:#e8eefc; --muted:rgba(232,238,252,.70); --muted2:rgba(232,238,252,.55);
+      --accent:rgba(90,167,255,.20);
+      --dangerBorder:rgba(255,90,90,.28); --dangerBg:rgba(255,90,90,.10); --dangerText:#ffd6d6;
     }
-    *{box-sizing:border-box}
     body{
-      margin:0;
-      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:var(--bg);
-      color:var(--text);
+      margin:0; background:var(--bg); color:var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     }
-    header{
-      padding:16px 14px;
-      border-bottom:1px solid var(--line);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-    }
-    .brand{display:flex;flex-direction:column;line-height:1.1}
-    .brand b{font-size:16px}
-    .brand span{font-size:12px;color:var(--muted)}
+    .wrap{ max-width:720px; margin:0 auto; padding:18px 14px 28px; }
+    .top{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .title{ font-size:22px; font-weight:800; margin:2px 0 2px; }
+    .sub{ font-size:13px; color:var(--muted); margin:0; }
     .pill{
-      font-size:12px;
-      border:1px solid var(--line);
-      padding:6px 10px;
-      border-radius:999px;
-      color:var(--muted);
+      font-size:12px; color:var(--muted); border:1px solid var(--border);
+      padding:8px 10px; border-radius:999px; background:rgba(232,238,252,.04);
+      white-space:nowrap;
     }
-    main{padding:14px}
     .card{
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:14px;
-      box-shadow:0 10px 30px rgba(0,0,0,.25);
-      max-width:980px;
-      margin:0 auto;
+      margin-top:14px; padding:14px; border-radius:16px;
+      border:1px solid var(--border); background:rgba(232,238,252,.04);
     }
-    .hint{
-      margin-top:10px;
-      font-size:13px;
-      color:var(--muted);
+    .label{ font-size:12px; color:var(--muted); margin:0 0 6px; }
+    input{
+      width:100%; box-sizing:border-box;
+      padding:12px; border-radius:12px; border:1px solid var(--border);
+      background:rgba(232,238,252,.06); color:var(--text);
+      font-size:16px; outline:none;
     }
-    .hint code{
-      background:rgba(232,238,252,.08);
-      padding:2px 6px;
-      border-radius:8px;
-      color:var(--text);
+    button{
+      width:100%;
+      padding:12px 14px; border-radius:12px; border:1px solid var(--border);
+      background:var(--accent); color:var(--text);
+      font-size:15px; font-weight:700;
     }
-    .error{
-      margin-top:12px;
-      padding:12px;
-      border-radius:12px;
-      border:1px solid rgba(255,90,90,.25);
-      background:rgba(255,90,90,.08);
-      color:#ffd6d6;
-      display:none;
-      white-space:pre-wrap;
-      font-size:12px;
+    .out{
+      margin-top:12px; padding:12px; border-radius:12px;
+      border:1px solid rgba(232,238,252,.12); background:rgba(232,238,252,.04);
+      min-height:56px;
     }
-    footer{
-      padding:14px;
-      color:var(--muted);
-      font-size:12px;
-      text-align:center;
+    .err{
+      display:none; margin-top:12px; padding:12px; border-radius:12px;
+      border:1px solid var(--dangerBorder); background:var(--dangerBg);
+      color:var(--dangerText); font-size:12px; white-space:pre-wrap;
     }
-    a{color:var(--accent)}
+    .foot{ margin-top:12px; font-size:11px; color:var(--muted2); }
+    code{ color:rgba(232,238,252,.85); }
   </style>
 </head>
 
 <body>
-  <header>
-    <div class="brand">
-      <b>TaxIQ</b>
-      <span>Nigerian tax calculator (PAYE v1)</span>
-    </div>
-    <div class="pill">GitHub Pages</div>
-  </header>
-
-  <main>
-    <div class="card">
-      <div id="app"></div>
-
-      <div class="hint">
-        App entry: <code>./src/app/src/app/app.js</code><br>
-        If anything fails, an error box will show below (useful on phone).
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <div class="title">TaxIQ</div>
+        <p class="sub">Nigerian tax calculator (PAYE v1)</p>
       </div>
-
-      <div id="err" class="error"></div>
+      <div class="pill">GitHub Pages</div>
     </div>
-  </main>
 
-  <footer>TaxIQ • Prototype build</footer>
+    <div class="card">
+      <div class="label">PAYE quick test (v1) — enter income and compute PAYE using the engine.</div>
 
-  <!-- IMPORTANT: relative path (./) so it works under /Taxiq-backend/ -->
-  <script type="module" src="./src/app/src/app/app.js"></script>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+        <div>
+          <div class="label">Income (₦)</div>
+          <input id="taxiq_income" inputmode="decimal" placeholder="e.g., 500000" />
+          <div class="foot">
+            If your engine expects monthly vs annual income, we’ll align labels after we confirm output.
+          </div>
+        </div>
 
-  <script>
-    window.addEventListener('error', function (e) {
-      const el = document.getElementById('err');
-      if (!el) return;
-      el.style.display = 'block';
-      el.textContent = 'Runtime error:\\n' + (e && e.message ? e.message : String(e));
-    });
-    window.addEventListener('unhandledrejection', function (e) {
-      const el = document.getElementById('err');
-      if (!el) return;
-      el.style.display = 'block';
-      el.textContent = 'Unhandled promise rejection:\\n' + (e && e.reason ? String(e.reason) : 'Unknown');
+        <button id="taxiq_btn">Compute PAYE</button>
+
+        <div class="out" id="taxiq_out">
+          <div class="label">Result will appear here.</div>
+        </div>
+
+        <div class="err" id="taxiq_err"></div>
+
+        <div class="foot">
+          Debug: index.html loaded. If you still see your old screen after this commit, it is cache or Pages not deploying the branch.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    function naira(n) {
+      const num = Number(n);
+      if (!Number.isFinite(num)) return "—";
+      return "₦" + num.toLocaleString("en-NG", { maximumFractionDigits: 2 });
+    }
+
+    function showError(msg) {
+      const el = document.getElementById("taxiq_err");
+      el.style.display = "block";
+      el.textContent = String(msg);
+    }
+
+    function normalizeIncome(raw) {
+      const cleaned = String(raw || "").replace(/,/g, "").trim();
+      const n = Number(cleaned);
+      if (!Number.isFinite(n) || n < 0) return null;
+      return n;
+    }
+
+    async function loadPAYE() {
+      // index.html is at repo root, so paths are from root:
+      const candidates = [
+        "./src/modules/paye/paye.js",
+        "./src/modules/paye/src/modules/paye/paye.js",
+        "./src/engine/payeEngine.js"
+      ];
+
+      let lastErr = null;
+      for (const path of candidates) {
+        try {
+          const mod = await import(path);
+          if (typeof mod.runPAYE === "function") return { fn: mod.runPAYE, source: path };
+          if (typeof mod.calculatePAYE === "function") return { fn: mod.calculatePAYE, source: path };
+          lastErr = new Error(`Loaded ${path} but did not find runPAYE/calculatePAYE exports.`);
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      throw lastErr || new Error("Unable to load PAYE module from known paths.");
+    }
+
+    function renderResult(outEl, result, sourcePath) {
+      const isNumber = typeof result === "number";
+      const isObj = result && typeof result === "object";
+
+      if (isNumber) {
+        outEl.innerHTML = `
+          <div class="label">Source: <code>${sourcePath}</code></div>
+          <div style="margin-top:8px;font-size:18px;font-weight:800;">PAYE: ${naira(result)}</div>
+        `;
+        return;
+      }
+
+      if (isObj) {
+        const paye = result.paye ?? result.tax ?? result.monthlyPAYE ?? result.annualPAYE ?? result.totalTax;
+        outEl.innerHTML = `
+          <div class="label">Source: <code>${sourcePath}</code></div>
+          <div style="margin-top:8px;font-size:18px;font-weight:800;">
+            PAYE: ${Number.isFinite(Number(paye)) ? naira(paye) : "—"}
+          </div>
+          <details style="margin-top:10px;">
+            <summary style="cursor:pointer;color:rgba(232,238,252,.75);">Details</summary>
+            <pre style="white-space:pre-wrap;word-break:break-word;font-size:12px;color:rgba(232,238,252,.75);margin:10px 0 0;">${JSON.stringify(result, null, 2)}</pre>
+          </details>
+        `;
+        return;
+      }
+
+      outEl.innerHTML = `
+        <div class="label">Source: <code>${sourcePath}</code></div>
+        <pre style="white-space:pre-wrap;word-break:break-word;font-size:12px;color:rgba(232,238,252,.75);margin:10px 0 0;">${String(result)}</pre>
+      `;
+    }
+
+    const btn = document.getElementById("taxiq_btn");
+    const incomeEl = document.getElementById("taxiq_income");
+    const outEl = document.getElementById("taxiq_out");
+
+    btn.addEventListener("click", async () => {
+      document.getElementById("taxiq_err").style.display = "none";
+
+      const income = normalizeIncome(incomeEl.value);
+      if (income === null) {
+        showError("Please enter a valid non-negative number for income.");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Computing…";
+
+      try {
+        const { fn, source } = await loadPAYE();
+        const result = fn(income);
+        const resolved = (result && typeof result.then === "function") ? await result : result;
+        renderResult(outEl, resolved, source);
+      } catch (e) {
+        showError(
+          "PAYE module load/run failed.\n\n" +
+          "Most likely cause: wrong file path or export name.\n\n" +
+          "Error:\n" + (e && e.stack ? e.stack : String(e))
+        );
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Compute PAYE";
+      }
     });
   </script>
 </body>
