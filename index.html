@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TaxIQ — Nigeria PAYE (v0.1.4)</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#111a2e;
+      --muted:#93a4c7;
+      --text:#e8eeff;
+      --accent:#6aa9ff;
+      --good:#3ddc97;
+      --warn:#ffcc66;
+      --bad:#ff6b6b;
+      --border:rgba(255,255,255,.08);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:16px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1000px 800px at 20% 10%, rgba(106,169,255,.15), transparent 60%),
+                  radial-gradient(900px 700px at 80% 30%, rgba(61,220,151,.12), transparent 60%),
+                  var(--bg);
+      color:var(--text);
+    }
+    header{
+      position:sticky; top:0;
+      backdrop-filter: blur(10px);
+      background: rgba(11,18,32,.65);
+      border-bottom:1px solid var(--border);
+      z-index:10;
+    }
+    .wrap{ max-width:980px; margin:0 auto; padding:14px 14px 40px; }
+    .top{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .brand{
+      display:flex; flex-direction:column;
+      line-height:1.15;
+    }
+    .brand h1{ margin:0; font-size:18px; letter-spacing:.2px; }
+    .brand small{ color:var(--muted); }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      border-radius:999px;
+      color:var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:14px;
+      margin-top:14px;
+    }
+    @media (max-width:900px){
+      .grid{ grid-template-columns:1fr; }
+    }
+    .card{
+      background: rgba(17,26,46,.85);
+      border:1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding:14px;
+    }
+    .card h2{ margin:0 0 10px; font-size:14px; color:var(--muted); font-weight:600; }
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width:520px){
+      .row{ grid-template-columns:1fr; }
+    }
+    label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin:0 0 6px;
+    }
+    input, select{
+      width:100%;
+      padding:12px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color:var(--text);
+      outline:none;
+      font-size:14px;
+    }
+    input::placeholder{ color: rgba(232,238,255,.35); }
+    .toggle{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background: rgba(255,255,255,.03);
+    }
+    .toggle input{ width:auto; transform: scale(1.1); }
+    .btns{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:12px;
+    }
+    button{
+      border:1px solid var(--border);
+      background: rgba(106,169,255,.14);
+      color:var(--text);
+      padding:11px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:600;
+      font-size:13px;
+    }
+    button.secondary{
+      background: rgba(255,255,255,.05);
+      color: var(--muted);
+    }
+    button.danger{
+      background: rgba(255,107,107,.12);
+      color:#ffd3d3;
+    }
+    .kpis{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width:520px){
+      .kpis{ grid-template-columns:1fr; }
+    }
+    .kpi{
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:12px;
+      background: rgba(255,255,255,.03);
+    }
+    .kpi .t{ font-size:12px; color:var(--muted); margin-bottom:6px; }
+    .kpi .v{ font-size:18px; font-weight:800; letter-spacing:.2px; }
+    .kpi .s{ font-size:12px; color:var(--muted); margin-top:6px; }
+    .note{
+      margin-top:10px;
+      font-size:12px;
+      color: var(--muted);
+      line-height:1.5;
+    }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .line{
+      height:1px;
+      background: var(--border);
+      margin:12px 0;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      font-size:12px;
+    }
+    .ok{ color: var(--good); }
+    .warn{ color: var(--warn); }
+    .bad{ color: var(--bad); }
+    footer{
+      margin-top:16px;
+      color: var(--muted);
+      font-size:12px;
+      text-align:center;
+    }
+    a{ color: var(--accent); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+    .smallcaps{ text-transform: uppercase; letter-spacing:.08em; font-size:11px; color: var(--muted); }
+    .table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background: rgba(255,255,255,.02);
+    }
+    .table th, .table td{
+      padding:10px 10px;
+      border-bottom: 1px solid var(--border);
+      font-size:12px;
+      text-align:left;
+      vertical-align:top;
+    }
+    .table th{ color: var(--muted); font-weight:700; background: rgba(255,255,255,.03); }
+    .table tr:last-child td{ border-bottom:none; }
+    .right{ text-align:right; }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <h1>TaxIQ <span class="pill">Nigeria PAYE • v0.1.4</span></h1>
+        <small>Mobile-safe one-file build (GitHub Pages friendly)</small>
+      </div>
+      <div class="pill" id="statusPill">Ready</div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="grid">
+    <!-- INPUTS -->
+    <section class="card">
+      <h2>Inputs (Monthly)</h2>
+
+      <div class="row">
+        <div>
+          <label for="grossMonthly">Gross monthly income (₦)</label>
+          <input id="grossMonthly" inputmode="decimal" placeholder="e.g., 1500000" />
+        </div>
+
+        <div>
+          <label for="state">State (for future rules)</label>
+          <select id="state">
+            <option value="NG" selected>Nigeria (generic PAYE)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <div>
+          <label for="pensionPct">Pension % (employee) — optional</label>
+          <input id="pensionPct" inputmode="decimal" placeholder="e.g., 8" />
+        </div>
+
+        <div>
+          <label for="nhfPct">NHF % — optional</label>
+          <input id="nhfPct" inputmode="decimal" placeholder="e.g., 2.5" />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <div>
+          <label for="otherDeductionsMonthly">Other non-taxable deductions (₦/month) — optional</label>
+          <input id="otherDeductionsMonthly" inputmode="decimal" placeholder="e.g., 50000" />
+        </div>
+
+        <div>
+          <label for="taxYear">Tax year label</label>
+          <input id="taxYear" placeholder="e.g., 2026" />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <div class="toggle">
+          <input id="applyCRA" type="checkbox" checked />
+          <div>
+            <div style="font-weight:700;">Apply CRA (Consolidated Relief Allowance)</div>
+            <div class="note" style="margin:4px 0 0;">CRA = higher of ₦200,000 or 1% of annual gross + 20% of annual gross</div>
+          </div>
+        </div>
+
+        <div class="toggle">
+          <input id="roundToNaira" type="checkbox" checked />
+          <div>
+            <div style="font-weight:700;">Round outputs to nearest ₦</div>
+            <div class="note" style="margin:4px 0 0;">Improves readability on mobile.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btns">
+        <button id="btnCalc">Compute PAYE</button>
+        <button class="secondary" id="btnSave">Save inputs</button>
+        <button class="secondary" id="btnLoad">Load saved</button>
+        <button class="danger" id="btnReset">Reset</button>
+      </div>
+
+      <div class="note">
+        <span class="badge">Tip</span>
+        For accuracy, enter <span class="mono">gross monthly</span> only. The calculator annualizes automatically.
+      </div>
+    </section>
+
+    <!-- OUTPUTS -->
+    <section class="card">
+      <h2>Results</h2>
+
+      <div class="kpis">
+        <div class="kpi">
+          <div class="t">Annual Gross</div>
+          <div class="v mono" id="kpiAnnualGross">₦0</div>
+          <div class="s" id="kpiAnnualGrossSub">—</div>
+        </div>
+
+        <div class="kpi">
+          <div class="t">Annual Taxable Income</div>
+          <div class="v mono" id="kpiTaxable">₦0</div>
+          <div class="s" id="kpiTaxableSub">After reliefs/deductions</div>
+        </div>
+
+        <div class="kpi">
+          <div class="t">Annual PAYE</div>
+          <div class="v mono" id="kpiAnnualPaye">₦0</div>
+          <div class="s" id="kpiAnnualPayeSub">Progressive bands</div>
+        </div>
+
+        <div class="kpi">
+          <div class="t">Monthly PAYE</div>
+          <div class="v mono" id="kpiMonthlyPaye">₦0</div>
+          <div class="s" id="kpiMonthlyPayeSub">Annual / 12</div>
+        </div>
+
+        <div class="kpi">
+          <div class="t">Estimated Net Monthly</div>
+          <div class="v mono" id="kpiNetMonthly">₦0</div>
+          <div class="s" id="kpiNetMonthlySub">Gross − deductions − PAYE</div>
+        </div>
+
+        <div class="kpi">
+          <div class="t">Effective Tax Rate</div>
+          <div class="v mono" id="kpiEtr">0%</div>
+          <div class="s" id="kpiEtrSub">Annual PAYE / Annual Gross</div>
+        </div>
+      </div>
+
+      <div class="line"></div>
+
+      <div class="smallcaps">Breakdown</div>
+      <div style="margin-top:8px; overflow:auto;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th class="right">Annual (₦)</th>
+              <th class="right">Monthly (₦)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Gross</td>
+              <td class="right mono" id="bGrossA">₦0</td>
+              <td class="right mono" id="bGrossM">₦0</td>
+            </tr>
+            <tr>
+              <td>CRA (if applied)</td>
+              <td class="right mono" id="bCraA">₦0</td>
+              <td class="right mono" id="bCraM">₦0</td>
+            </tr>
+            <tr>
+              <td>Pension deduction</td>
+              <td class="right mono" id="bPensA">₦0</td>
+              <td class="right mono" id="bPensM">₦0</td>
+            </tr>
+            <tr>
+              <td>NHF deduction</td>
+              <td class="right mono" id="bNhfA">₦0</td>
+              <td class="right mono" id="bNhfM">₦0</td>
+            </tr>
+            <tr>
+              <td>Other deductions</td>
+              <td class="right mono" id="bOtherA">₦0</td>
+              <td class="right mono" id="bOtherM">₦0</td>
+            </tr>
+            <tr>
+              <td><strong>Taxable income</strong></td>
+              <td class="right mono" id="bTaxableA"><strong>₦0</strong></td>
+              <td class="right mono" id="bTaxableM"><strong>₦0</strong></td>
+            </tr>
+            <tr>
+              <td><strong>PAYE</strong></td>
+              <td class="right mono" id="bPayeA"><strong>₦0</strong></td>
+              <td class="right mono" id="bPayeM"><strong>₦0</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="btns" style="margin-top:12px;">
+        <button class="secondary" id="btnCopy">Copy summary</button>
+      </div>
+
+      <div class="note" id="notesBox">
+        <span class="badge">Note</span>
+        This is a simplified PAYE model. If your employer uses additional reliefs/benefit taxation rules, results may differ.
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    TaxIQ is a personal finance tool. Always validate against your payslip and applicable regulations.
+  </footer>
+</main>
+
+<script>
+  // ========= Helpers =========
+  const fmtNGN = (n, round=true) => {
+    if (!isFinite(n)) n = 0;
+    const x = round ? Math.round(n) : n;
+    return "₦" + x.toLocaleString("en-NG");
+  };
+
+  const clampMin0 = (n) => Math.max(0, isFinite(n) ? n : 0);
+
+  const parseNum = (v) => {
+    if (v === null || v === undefined) return 0;
+    const cleaned = String(v).replace(/,/g, "").trim();
+    if (cleaned === "") return 0;
+    const n = Number(cleaned);
+    return isFinite(n) ? n : 0;
+  };
+
+  // ========= PAYE bands (annual taxable) =========
+  // Commonly referenced Nigeria PAYE rates:
+  //  - First 300,000 @ 7%
+  //  - Next 300,000 @ 11%
+  //  - Next 500,000 @ 15%
+  //  - Next 500,000 @ 19%
+  //  - Next 1,600,000 @ 21%
+  //  - Above @ 24%
+  // NOTE: This uses the standard progressive structure widely implemented in PAYE calculators.
+  const PAYE_BANDS = [
+    { cap: 300000, rate: 0.07 },
+    { cap: 300000, rate: 0.11 },
+    { cap: 500000, rate: 0.15 },
+    { cap: 500000, rate: 0.19 },
+    { cap: 1600000, rate: 0.21 },
+    { cap: Infinity, rate: 0.24 }
+  ];
+
+  function computePayeAnnual(taxableAnnual){
+    let remaining = clampMin0(taxableAnnual);
+    let tax = 0;
+
+    for (const b of PAYE_BANDS){
+      if (remaining <= 0) break;
+      const slice = Math.min(remaining, b.cap);
+      tax += slice * b.rate;
+      remaining -= slice;
+    }
+    return clampMin0(tax);
+  }
+
+  function computeCRA(annualGross){
+    // CRA = higher of ₦200,000 or 1% of annual gross + 20% of annual gross
+    const base = Math.max(200000, 0.01 * annualGross);
+    return base + 0.20 * annualGross;
+  }
+
+  // ========= DOM =========
+  const el = (id) => document.getElementById(id);
+
+  const statusPill = el("statusPill");
+  const grossMonthly = el("grossMonthly");
+  const pensionPct = el("pensionPct");
+  const nhfPct = el("nhfPct");
+  const otherDeductionsMonthly = el("otherDeductionsMonthly");
+  const applyCRA = el("applyCRA");
+  const roundToNaira = el("roundToNaira");
+  const taxYear = el("taxYear");
+
+  // KPIs
+  const kpiAnnualGross = el("kpiAnnualGross");
+  const kpiTaxable = el("kpiTaxable");
+  const kpiAnnualPaye = el("kpiAnnualPaye");
+  const kpiMonthlyPaye = el("kpiMonthlyPaye");
+  const kpiNetMonthly = el("kpiNetMonthly");
+  const kpiEtr = el("kpiEtr");
+
+  // Breakdown
+  const bGrossA = el("bGrossA");
+  const bGrossM = el("bGrossM");
+  const bCraA = el("bCraA");
+  const bCraM = el("bCraM");
+  const bPensA = el("bPensA");
+  const bPensM = el("bPensM");
+  const bNhfA = el("bNhfA");
+  const bNhfM = el("bNhfM");
+  const bOtherA = el("bOtherA");
+  const bOtherM = el("bOtherM");
+  const bTaxableA = el("bTaxableA");
+  const bTaxableM = el("bTaxableM");
+  const bPayeA = el("bPayeA");
+  const bPayeM = el("bPayeM");
+
+  const notesBox = el("notesBox");
+
+  function setStatus(text, tone="muted"){
+    statusPill.textContent = text;
+    statusPill.className = "pill";
+    if (tone === "ok") statusPill.classList.add("ok");
+    if (tone === "warn") statusPill.classList.add("warn");
+    if (tone === "bad") statusPill.classList.add("bad");
+  }
+
+  function calc(){
+    const round = roundToNaira.checked;
+
+    const grossM = clampMin0(parseNum(grossMonthly.value));
+    const annualGross = grossM * 12;
+
+    const pensPct = clampMin0(parseNum(pensionPct.value)) / 100;
+    const nhfP = clampMin0(parseNum(nhfPct.value)) / 100;
+    const otherM = clampMin0(parseNum(otherDeductionsMonthly.value));
+
+    const pensA = annualGross * pensPct;
+    const nhfA = annualGross * nhfP;
+    const otherA = otherM * 12;
+
+    const craA = applyCRA.checked ? computeCRA(annualGross) : 0;
+
+    const taxableA = clampMin0(annualGross - craA - pensA - nhfA - otherA);
+    const payeA = computePayeAnnual(taxableA);
+    const payeM = payeA / 12;
+
+    const netM = clampMin0(grossM - (pensA/12) - (nhfA/12) - otherM - payeM);
+
+    const etr = annualGross > 0 ? (payeA / annualGross) * 100 : 0;
+
+    // KPIs
+    kpiAnnualGross.textContent = fmtNGN(annualGross, round);
+    kpiAnnualGrossSub.textContent = "From " + fmtNGN(grossM, round) + " / month";
+
+    kpiTaxable.textContent = fmtNGN(taxableA, round);
+    kpiAnnualPaye.textContent = fmtNGN(payeA, round);
+    kpiMonthlyPaye.textContent = fmtNGN(payeM, round);
+    kpiNetMonthly.textContent = fmtNGN(netM, round);
+    kpiEtr.textContent = (round ? Math.round(etr*10)/10 : etr).toFixed(1) + "%";
+
+    // Breakdown
+    bGrossA.textContent = fmtNGN(annualGross, round);
+    bGrossM.textContent = fmtNGN(grossM, round);
+
+    bCraA.textContent = fmtNGN(craA, round);
+    bCraM.textContent = fmtNGN(craA/12, round);
+
+    bPensA.textContent = fmtNGN(pensA, round);
+    bPensM.textContent = fmtNGN(pensA/12, round);
+
+    bNhfA.textContent = fmtNGN(nhfA, round);
+    bNhfM.textContent = fmtNGN(nhfA/12, round);
+
+    bOtherA.textContent = fmtNGN(otherA, round);
+    bOtherM.textContent = fmtNGN(otherM, round);
+
+    bTaxableA.textContent = fmtNGN(taxableA, round);
+    bTaxableM.textContent = fmtNGN(taxableA/12, round);
+
+    bPayeA.textContent = fmtNGN(payeA, round);
+    bPayeM.textContent = fmtNGN(payeM, round);
+
+    // Notes
+    const year = (taxYear.value || "").trim();
+    const yearText = year ? (" • Tax year: " + year) : "";
+    notesBox.innerHTML =
+      `<span class="badge">Model</span>
+       PAYE computed using standard progressive annual bands; inputs annualized from monthly values${yearText}.`;
+
+    // Status
+    if (grossM === 0){
+      setStatus("Enter income", "warn");
+    } else {
+      setStatus("Computed", "ok");
+    }
+
+    return { grossM, annualGross, taxableA, payeA, payeM, netM, pensPct, nhfP, otherM, craA, etr, year };
+  }
+
+  // ========= Persistence =========
+  const KEY = "taxiq.v0_1_4.inputs";
+
+  function saveInputs(){
+    const payload = {
+      grossMonthly: grossMonthly.value,
+      pensionPct: pensionPct.value,
+      nhfPct: nhfPct.value,
+      otherDeductionsMonthly: otherDeductionsMonthly.value,
+      applyCRA: applyCRA.checked,
+      roundToNaira: roundToNaira.checked,
+      taxYear: taxYear.value
+    };
+    localStorage.setItem(KEY, JSON.stringify(payload));
+    setStatus("Saved", "ok");
+  }
+
+  function loadInputs(){
+    const raw = localStorage.getItem(KEY);
+    if (!raw){
+      setStatus("No saved inputs", "warn");
+      return;
+    }
+    try{
+      const p = JSON.parse(raw);
+      grossMonthly.value = p.grossMonthly ?? "";
+      pensionPct.value = p.pensionPct ?? "";
+      nhfPct.value = p.nhfPct ?? "";
+      otherDeductionsMonthly.value = p.otherDeductionsMonthly ?? "";
+      applyCRA.checked = (p.applyCRA ?? true);
+      roundToNaira.checked = (p.roundToNaira ?? true);
+      taxYear.value = p.taxYear ?? "";
+      setStatus("Loaded", "ok");
+      calc();
+    }catch(e){
+      setStatus("Load failed", "bad");
+    }
+  }
+
+  function resetAll(){
+    grossMonthly.value = "";
+    pensionPct.value = "";
+    nhfPct.value = "";
+    otherDeductionsMonthly.value = "";
+    applyCRA.checked = true;
+    roundToNaira.checked = true;
+    taxYear.value = "";
+    localStorage.removeItem(KEY);
+    setStatus("Reset", "ok");
+    calc();
+  }
+
+  async function copySummary(){
+    const r = calc();
+    const year = r.year ? `Tax year: ${r.year}\n` : "";
+    const txt =
+`TaxIQ — Nigeria PAYE Summary
+${year}Gross monthly: ${fmtNGN(r.grossM)}
+Annual gross: ${fmtNGN(r.annualGross)}
+CRA applied: ${applyCRA.checked ? "Yes" : "No"} (Annual CRA: ${fmtNGN(r.craA)})
+Taxable annual: ${fmtNGN(r.taxableA)}
+Annual PAYE: ${fmtNGN(r.payeA)}
+Monthly PAYE: ${fmtNGN(r.payeM)}
+Estimated net monthly: ${fmtNGN(r.netM)}
+Effective tax rate: ${r.etr.toFixed(1)}%`;
+
+    try{
+      await navigator.clipboard.writeText(txt);
+      setStatus("Summary copied", "ok");
+    }catch(e){
+      // Fallback
+      const ta = document.createElement("textarea");
+      ta.value = txt;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      setStatus("Copied (fallback)", "ok");
+    }
+  }
+
+  // ========= Wire up =========
+  el("btnCalc").addEventListener("click", () => calc());
+  el("btnSave").addEventListener("click", () => saveInputs());
+  el("btnLoad").addEventListener("click", () => loadInputs());
+  el("btnReset").addEventListener("click", () => resetAll());
+  el("btnCopy").addEventListener("click", () => copySummary());
+
+  // Live compute on key changes (mobile-friendly)
+  ["input","change"].forEach(evt => {
+    [grossMonthly, pensionPct, nhfPct, otherDeductionsMonthly, applyCRA, roundToNaira, taxYear]
+      .forEach(x => x.addEventListener(evt, () => calc()));
+  });
+
+  // Initial
+  setStatus("Ready", "muted");
+  calc();
+</script>
+</body>
+</html>
