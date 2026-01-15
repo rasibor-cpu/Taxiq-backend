@@ -36,12 +36,13 @@
       display:flex;align-items:center;justify-content:space-between;gap:10px
     }
     .row{display:flex;gap:10px;flex-wrap:wrap}
-    .field{flex:1 1 220px;display:flex;flex-direction:column;gap:6px;margin:8px 0;}
+    .field{flex:1 1 240px;display:flex;flex-direction:column;gap:6px;margin:8px 0;}
     label{font-size:12px;color:var(--muted)}
     input, select{
       width:100%;
       padding:11px 12px; border-radius:12px; border:1px solid var(--line);
       background:var(--card2); color:var(--text); outline:none;
+      font-size:15px; letter-spacing:.3px;
     }
     input::placeholder{color:rgba(169,182,211,.6)}
     .hint{font-size:12px;color:rgba(169,182,211,.85);margin-top:4px}
@@ -59,6 +60,10 @@
     .table th,.table td{padding:10px 10px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle;}
     .table th{color:#dbe6ff;text-align:left;background:rgba(255,255,255,.03)}
     .table tr:last-child td{border-bottom:none}
+
+    /* WIDE MONEY INPUTS (100B ready) */
+    .money{min-width:260px;font-variant-numeric:tabular-nums;}
+
     .tiny{font-size:12px;color:var(--muted)}
     .pill{
       display:inline-flex;align-items:center;gap:8px;
@@ -79,6 +84,29 @@
     .kpi .v{margin-top:6px;font-size:18px;font-weight:800;color:#fff}
     .kpi .s{margin-top:4px;font-size:12px;color:rgba(169,182,211,.85)}
     .section{margin-top:14px}
+    .toggleline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}
+    .checkbox{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+    .checkbox input{width:auto}
+    details{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:rgba(255,255,255,.02);
+      padding:10px 12px;
+      margin-top:10px;
+    }
+    details summary{
+      cursor:pointer;
+      color:#dbe6ff;
+      font-weight:700;
+      list-style:none;
+    }
+    details summary::-webkit-details-marker{display:none}
+    .badge{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:4px 10px;border-radius:999px;border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      font-size:12px;color:var(--muted);margin-left:10px;
+    }
   </style>
 </head>
 
@@ -89,7 +117,7 @@
         <h1>TaxIQ — PAYE Calculator</h1>
         <div class="sub">
           PAYE = function of annualized earnings (base + taxable allowances − annualized deductions).<br/>
-          All amount fields auto-format with commas for readability.
+          All amount fields auto-format with commas; large figures up to 100B display cleanly.
         </div>
       </div>
       <div class="sig">Robert Asibor
@@ -104,7 +132,7 @@ Author | Financial Strategy</div>
         <div class="row">
           <div class="field">
             <label>Base Pay Amount</label>
-            <input id="basePay" type="text" inputmode="numeric" placeholder="e.g., 6,000,000" />
+            <input id="basePay" class="money" type="text" inputmode="numeric" placeholder="e.g., 6,000,000" />
             <div class="hint">Type numbers only; commas appear automatically.</div>
           </div>
 
@@ -125,10 +153,10 @@ Author | Financial Strategy</div>
             <thead>
               <tr>
                 <th style="width:34%">Allowance Name</th>
-                <th style="width:18%">Amount</th>
+                <th style="width:26%">Amount</th>
                 <th style="width:18%">Frequency</th>
-                <th style="width:14%">Taxable?</th>
-                <th style="width:16%">Notes</th>
+                <th style="width:12%">Taxable?</th>
+                <th style="width:10%">Notes</th>
               </tr>
             </thead>
             <tbody id="allowBody"></tbody>
@@ -140,24 +168,82 @@ Author | Financial Strategy</div>
         </div>
 
         <div class="section">
-          <h2>Deductions <span class="tiny">Simple payroll-style input</span></h2>
+          <h2>Deductions <span class="tiny">Simple Mode + Advanced Breakdown</span></h2>
 
+          <!-- Simple Mode -->
           <div class="row">
             <div class="field">
-              <label>Total Monthly Deductions</label>
-              <input id="monthlyDeds" type="text" inputmode="numeric" placeholder="e.g., 40,000" />
-              <div class="hint">Enter total deductions from payslip. We annualize this × 12.</div>
+              <label>Total Monthly Deductions (Simple Mode)</label>
+              <input id="monthlyDeds" class="money" type="text" inputmode="numeric" placeholder="e.g., 40,000" />
+              <div class="hint">If you open Advanced mode below, this field becomes auto-calculated.</div>
             </div>
             <div class="field">
               <label>Annualized Deductions (auto)</label>
-              <input id="annualDeds" type="text" readonly />
-              <div class="hint">This updates immediately as you type.</div>
+              <input id="annualDeds" class="money" type="text" readonly />
+              <div class="hint">Updates immediately as you type.</div>
             </div>
           </div>
 
-          <div class="tiny">
-            Later, we can expand this into pension/NHF/NHIS breakdown—but this is the fastest accurate method.
-          </div>
+          <!-- Advanced Mode -->
+          <details id="advancedBox">
+            <summary>
+              Advanced Deductions Breakdown
+              <span class="badge">Auto-sums monthly deductions</span>
+            </summary>
+
+            <div class="tiny" style="margin-top:8px">
+              Pension is computed as <b>% of Base Pay</b> only (not allowances).
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label>Employee Pension % of Base Pay</label>
+                <input id="pensionPct" class="money" type="text" inputmode="numeric" value="8" />
+                <div class="hint">Default 8%. Change if needed.</div>
+              </div>
+
+              <div class="field">
+                <label>NHF (Monthly)</label>
+                <input id="nhf" class="money" type="text" inputmode="numeric" placeholder="e.g., 2,500" />
+              </div>
+
+              <div class="field">
+                <label>NHIS / HMO (Monthly)</label>
+                <input id="nhis" class="money" type="text" inputmode="numeric" placeholder="e.g., 10,000" />
+              </div>
+
+              <div class="field">
+                <label>Life Assurance (Monthly)</label>
+                <input id="life" class="money" type="text" inputmode="numeric" placeholder="e.g., 5,000" />
+              </div>
+            </div>
+
+            <table class="table">
+              <thead>
+                <tr>
+                  <th style="width:40%">Other Deductible (Name)</th>
+                  <th style="width:40%">Amount (Monthly)</th>
+                  <th style="width:20%">Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><input id="od1Name" type="text" placeholder="e.g., Union dues" /></td>
+                  <td><input id="od1Amt" class="money" type="text" inputmode="numeric" placeholder="0" /></td>
+                  <td><span class="tiny">Optional</span></td>
+                </tr>
+                <tr>
+                  <td><input id="od2Name" type="text" placeholder="e.g., Professional levy" /></td>
+                  <td><input id="od2Amt" class="money" type="text" inputmode="numeric" placeholder="0" /></td>
+                  <td><span class="tiny">Optional</span></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="tiny" style="margin-top:10px">
+              When Advanced mode is open, “Total Monthly Deductions” is computed automatically from these fields.
+            </div>
+          </details>
         </div>
 
         <div class="btnbar">
@@ -200,6 +286,16 @@ Author | Financial Strategy</div>
     const monthlyDedsEl = document.getElementById("monthlyDeds");
     const annualDedsEl = document.getElementById("annualDeds");
 
+    const advancedBox = document.getElementById("advancedBox");
+    const pensionPctEl = document.getElementById("pensionPct");
+    const nhfEl = document.getElementById("nhf");
+    const nhisEl = document.getElementById("nhis");
+    const lifeEl = document.getElementById("life");
+    const od1NameEl = document.getElementById("od1Name");
+    const od1AmtEl = document.getElementById("od1Amt");
+    const od2NameEl = document.getElementById("od2Name");
+    const od2AmtEl = document.getElementById("od2Amt");
+
     const btnCalc = document.getElementById("btnCalc");
     const btnReset = document.getElementById("btnReset");
     const statusPill = document.getElementById("statusPill");
@@ -231,13 +327,16 @@ Author | Financial Strategy</div>
     }
 
     function formatInputWithCommas(el){
-      const pos = el.selectionStart;
       const raw = el.value.replace(/,/g,"");
-      // Keep digits only
       const digits = raw.replace(/[^\d]/g,"");
       el.value = digits ? formatMoney(Number(digits)) : "";
-      // Best-effort caret placement (simple)
       el.setSelectionRange(el.value.length, el.value.length);
+    }
+
+    function updateAnnualDedsFromMonthly(){
+      const monthly = parseMoney(monthlyDedsEl.value);
+      const annual = monthly * 12;
+      annualDedsEl.value = monthly ? formatMoney(annual) : "";
     }
 
     function makeAllowRow({ name="", locked=false, amount="", freq="monthly", taxable=true, note="" }){
@@ -254,6 +353,7 @@ Author | Financial Strategy</div>
       const amtInput = document.createElement("input");
       amtInput.type = "text";
       amtInput.inputMode = "numeric";
+      amtInput.className = "money";
       amtInput.placeholder = "0";
       amtInput.value = amount;
       amtInput.addEventListener("input", ()=>formatInputWithCommas(amtInput));
@@ -305,10 +405,10 @@ Author | Financial Strategy</div>
     function buildAllowanceTable(){
       allowBody.innerHTML = "";
       const fixed = [
-        { name:"Rent/Housing", locked:true, note:"Fixed field" },
-        { name:"Transportation", locked:true, note:"Fixed field" },
-        { name:"Furniture/Fittings", locked:true, note:"Fixed field" },
-        { name:"Entertainment", locked:true, note:"Fixed field" },
+        { name:"Rent/Housing", locked:true, note:"Fixed" },
+        { name:"Transportation", locked:true, note:"Fixed" },
+        { name:"Furniture/Fittings", locked:true, note:"Fixed" },
+        { name:"Entertainment", locked:true, note:"Fixed" },
       ];
       for (const f of fixed){
         allowBody.appendChild(makeAllowRow({ ...f, freq:"monthly", taxable:true }));
@@ -341,6 +441,38 @@ Author | Financial Strategy</div>
       return null;
     }
 
+    function computeAdvancedMonthlyDeds(){
+      // Pension = % of BASE PAY only
+      const basePay = parseMoney(basePayEl.value);
+      const baseFreq = baseFreqEl.value; // annual|monthly
+
+      const pensionPct = parseMoney(pensionPctEl.value);
+      const pensionAmount = (pensionPct/100) * basePay;
+
+      // Convert pension to monthly equivalent
+      const pensionMonthly = baseFreq === "annual" ? (pensionAmount/12) : pensionAmount;
+
+      const nhf = parseMoney(nhfEl.value);
+      const nhis = parseMoney(nhisEl.value);
+      const life = parseMoney(lifeEl.value);
+      const od1 = parseMoney(od1AmtEl.value);
+      const od2 = parseMoney(od2AmtEl.value);
+
+      const total = (Number.isFinite(pensionMonthly)?pensionMonthly:0) + nhf + nhis + life + od1 + od2;
+      return Math.max(0, total);
+    }
+
+    function syncSimpleFieldWithAdvanced(){
+      if (!advancedBox.open){
+        monthlyDedsEl.readOnly = false;
+        return;
+      }
+      const totalMonthly = computeAdvancedMonthlyDeds();
+      monthlyDedsEl.value = totalMonthly ? formatMoney(Math.round(totalMonthly)) : "";
+      monthlyDedsEl.readOnly = true;
+      updateAnnualDedsFromMonthly();
+    }
+
     function render(result){
       rawOut.textContent = JSON.stringify(result, null, 2);
 
@@ -348,7 +480,8 @@ Author | Financial Strategy</div>
       if (b){
         const grossBeforeDeds = b.baseAnnual + b.allowancesAnnual;
         kpiGross.textContent = "₦ " + formatMoney(grossBeforeDeds);
-        kpiGrossBreak.textContent = `Base: ₦${formatMoney(b.baseAnnual)} | Allowances: ₦${formatMoney(b.allowancesAnnual)} | Deductions: ₦${formatMoney(b.deductionsAnnual)}`;
+        kpiGrossBreak.textContent =
+          `Base: ₦${formatMoney(b.baseAnnual)} | Allowances: ₦${formatMoney(b.allowancesAnnual)} | Deductions: ₦${formatMoney(b.deductionsAnnual)}`;
       } else {
         kpiGross.textContent = "—";
         kpiGrossBreak.textContent = "—";
@@ -371,30 +504,42 @@ Author | Financial Strategy</div>
       }
     }
 
-    function updateAnnualDeds(){
+    // Live formatting
+    basePayEl.addEventListener("input", ()=>{ formatInputWithCommas(basePayEl); syncSimpleFieldWithAdvanced(); });
+    monthlyDedsEl.addEventListener("input", ()=>{
+      if (monthlyDedsEl.readOnly) return;
+      formatInputWithCommas(monthlyDedsEl);
+      updateAnnualDedsFromMonthly();
+    });
+
+    // Advanced inputs formatting + sync
+    for (const el of [pensionPctEl, nhfEl, nhisEl, lifeEl, od1AmtEl, od2AmtEl]){
+      el.addEventListener("input", ()=>{
+        formatInputWithCommas(el);
+        syncSimpleFieldWithAdvanced();
+      });
+    }
+    advancedBox.addEventListener("toggle", ()=>syncSimpleFieldWithAdvanced());
+
+    function updateAnnualDedsFromMonthly(){
       const monthly = parseMoney(monthlyDedsEl.value);
       const annual = monthly * 12;
-      annualDedsEl.value = monthly ? formatMoney(annual) : "";
+      annualDedsEl.value = monthly ? formatMoney(Math.round(annual)) : "";
     }
-
-    // Live formatting hooks
-    basePayEl.addEventListener("input", ()=>formatInputWithCommas(basePayEl));
-    monthlyDedsEl.addEventListener("input", ()=>{
-      formatInputWithCommas(monthlyDedsEl);
-      updateAnnualDeds();
-    });
 
     btnCalc.addEventListener("click", () => {
       try{
         setStatus("Computing…");
         validate();
 
+        // If advanced open, ensure monthly deductions reflect it
+        syncSimpleFieldWithAdvanced();
+
         const basePay = parseMoney(basePayEl.value);
         const baseFrequency = baseFreqEl.value;
 
         const allowances = collectAllowances();
 
-        // single monthly deductions field annualized in backend via frequency
         const monthlyDeds = parseMoney(monthlyDedsEl.value);
         const deductions = monthlyDeds > 0
           ? [{ name: "Total Monthly Deductions", amount: monthlyDeds, frequency: "monthly" }]
@@ -413,8 +558,22 @@ Author | Financial Strategy</div>
     btnReset.addEventListener("click", () => {
       basePayEl.value = "";
       baseFreqEl.value = "annual";
+
+      monthlyDedsEl.readOnly = false;
       monthlyDedsEl.value = "";
       annualDedsEl.value = "";
+
+      pensionPctEl.value = "8";
+      nhfEl.value = "";
+      nhisEl.value = "";
+      lifeEl.value = "";
+      od1NameEl.value = "";
+      od1AmtEl.value = "";
+      od2NameEl.value = "";
+      od2AmtEl.value = "";
+
+      advancedBox.open = false;
+
       buildAllowanceTable();
       rawOut.textContent = "{}";
       kpiGross.textContent = "—";
@@ -429,4 +588,3 @@ Author | Financial Strategy</div>
   </script>
 </body>
 </html>
-
