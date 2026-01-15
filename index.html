@@ -67,7 +67,7 @@
       background:rgba(255,255,255,.03);
       font-size:12px;color:var(--muted)
     }
-    .ok{color:var(--ok)} .bad{color:var(--danger)}
+    .ok{color:ival(--ok)} .bad{color:var(--danger)}
     pre{
       white-space:pre-wrap;word-break:break-word;background:rgba(0,0,0,.25);
       border:1px solid var(--line);padding:12px;border-radius:14px;
@@ -81,16 +81,11 @@
     .kpi .s{margin-top:4px;font-size:12px;color:rgba(169,182,211,.85)}
     .section{margin-top:14px}
 
-    /* Money fields: up to 25+ chars visible */
+    /* Money fields: 25+ chars visible */
     .money{
-      width: 25ch;           /* KEY: 25 characters width */
-      min-width: 25ch;
+      width: 28ch;
+      min-width: 28ch;
       font-variant-numeric: tabular-nums;
-    }
-
-    /* Allow table inputs must be editable */
-    .table input, .table select{
-      width: 100%;
     }
 
     .totals{
@@ -108,6 +103,27 @@
     }
     .tot .t{font-size:12px;color:var(--muted)}
     .tot .v{margin-top:6px;font-size:16px;font-weight:900;color:#fff}
+
+    details{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:rgba(255,255,255,.02);
+      padding:10px 12px;
+      margin-top:10px;
+    }
+    details summary{
+      cursor:pointer;
+      color:#dbe6ff;
+      font-weight:800;
+      list-style:none;
+    }
+    details summary::-webkit-details-marker{display:none}
+    .badge{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:4px 10px;border-radius:999px;border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      font-size:12px;color:var(--muted);margin-left:10px;
+    }
   </style>
 </head>
 
@@ -191,18 +207,77 @@ Author | Financial Strategy</div>
         </div>
 
         <div class="section">
-          <h2>Deductions (Simple Mode)</h2>
+          <h2>Deductions</h2>
+
+          <!-- Simple Mode -->
           <div class="row">
             <div class="field">
-              <label>Total Monthly Deductions</label>
+              <label>Total Monthly Deductions (Simple Mode)</label>
               <input id="monthlyDeds" class="money" type="text" inputmode="numeric" placeholder="e.g., 40,000" />
-              <div class="hint">Auto-formats with commas as you type.</div>
+              <div class="hint">If Advanced mode is open, this field becomes read-only and auto-filled.</div>
             </div>
             <div class="field">
               <label>Annualized Deductions (auto)</label>
               <input id="annualDeds" class="money" type="text" readonly />
             </div>
           </div>
+
+          <!-- Advanced Mode (Option A: auto-fill & read-only) -->
+          <details id="advDeds">
+            <summary>
+              Advanced Deductions Breakdown
+              <span class="badge">Option A: Auto-sum + lock simple field</span>
+            </summary>
+
+            <div class="tiny" style="margin-top:8px">
+              Pension is computed as <b>% of Base Pay only</b> (not allowances). All fields here are monthly.
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label>Employee Pension (% of Base Pay)</label>
+                <input id="pensionPct" class="money" type="text" inputmode="numeric" value="8" />
+              </div>
+              <div class="field">
+                <label>NHF (Monthly)</label>
+                <input id="nhf" class="money" type="text" inputmode="numeric" placeholder="e.g., 2,500" />
+              </div>
+              <div class="field">
+                <label>NHIS / HMO (Monthly)</label>
+                <input id="nhis" class="money" type="text" inputmode="numeric" placeholder="e.g., 10,000" />
+              </div>
+              <div class="field">
+                <label>Life Assurance (Monthly)</label>
+                <input id="life" class="money" type="text" inputmode="numeric" placeholder="e.g., 5,000" />
+              </div>
+            </div>
+
+            <table class="table">
+              <thead>
+                <tr>
+                  <th style="width:40%">Other Deductible (Name)</th>
+                  <th style="width:40%">Amount (Monthly)</th>
+                  <th style="width:20%">Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><input id="od1Name" type="text" placeholder="e.g., Union dues" /></td>
+                  <td><input id="od1Amt" class="money" type="text" inputmode="numeric" placeholder="0" /></td>
+                  <td><span class="tiny">Optional</span></td>
+                </tr>
+                <tr>
+                  <td><input id="od2Name" type="text" placeholder="e.g., Professional levy" /></td>
+                  <td><input id="od2Amt" class="money" type="text" inputmode="numeric" placeholder="0" /></td>
+                  <td><span class="tiny">Optional</span></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="tiny" style="margin-top:10px">
+              When this section is open, Total Monthly Deductions is calculated automatically from these entries.
+            </div>
+          </details>
         </div>
 
         <div class="btnbar">
@@ -235,7 +310,6 @@ Author | Financial Strategy</div>
   </div>
 
   <script type="module">
-    // IMPORTANT: If this import fails, you will see the error in rawOut.
     import { runPAYE } from "./src/modules/paye/paye.js";
 
     const allowBody = document.getElementById("allowBody");
@@ -245,6 +319,14 @@ Author | Financial Strategy</div>
 
     const monthlyDedsEl = document.getElementById("monthlyDeds");
     const annualDedsEl = document.getElementById("annualDeds");
+
+    const advDeds = document.getElementById("advDeds");
+    const pensionPctEl = document.getElementById("pensionPct");
+    const nhfEl = document.getElementById("nhf");
+    const nhisEl = document.getElementById("nhis");
+    const lifeEl = document.getElementById("life");
+    const od1AmtEl = document.getElementById("od1Amt");
+    const od2AmtEl = document.getElementById("od2Amt");
 
     const totMonthly = document.getElementById("totMonthly");
     const totQuarterly = document.getElementById("totQuarterly");
@@ -288,7 +370,6 @@ Author | Financial Strategy</div>
       const raw = el.value.replace(/,/g,"");
       const digits = raw.replace(/[^\d]/g,"");
       el.value = digits ? formatMoney(Number(digits)) : "";
-      // keep caret at end (simple + reliable in GitHub Pages)
       el.setSelectionRange(el.value.length, el.value.length);
     }
 
@@ -298,8 +379,8 @@ Author | Financial Strategy</div>
       const f = String(frequency || "annual").toLowerCase();
       if (f === "monthly") return a * 12;
       if (f === "quarterly") return a * 4;
-      if (f === "one-off") return a * 1;
-      return a * 1; // annual
+      if (f === "one-off") return a;
+      return a; // annual
     }
 
     function makeRow({ name="", amount="", frequency="monthly", taxable=true } = {}){
@@ -357,7 +438,6 @@ Author | Financial Strategy</div>
         recalcTotals();
       }
 
-      // Attach formatting + recalc
       inAmt.addEventListener("input", ()=>{
         formatInputWithCommas(inAmt);
         recalcRow();
@@ -373,20 +453,16 @@ Author | Financial Strategy</div>
         taxable: chk.checked
       });
 
-      // initial compute
       recalcRow();
-
       return tr;
     }
 
     function seedRows(){
       allowBody.innerHTML = "";
-      // Pre-fill your earlier fixed rows, but editable now
       allowBody.appendChild(makeRow({ name:"Rent/Housing", frequency:"monthly", taxable:true }));
       allowBody.appendChild(makeRow({ name:"Transportation", frequency:"monthly", taxable:true }));
       allowBody.appendChild(makeRow({ name:"Furniture/Fittings", frequency:"monthly", taxable:true }));
       allowBody.appendChild(makeRow({ name:"Entertainment", frequency:"monthly", taxable:true }));
-      // 8 blank lines
       for (let i=0;i<8;i++) allowBody.appendChild(makeRow({ name:"", frequency:"monthly", taxable:true }));
       recalcTotals();
     }
@@ -420,16 +496,57 @@ Author | Financial Strategy</div>
       annualDedsEl.value = monthly ? formatMoney(monthly * 12) : "";
     }
 
-    // Format all money inputs globally (covers deductions + base pay)
     function attachMoneyFormatting(el){
-      el.addEventListener("input", ()=>{
-        formatInputWithCommas(el);
-      });
+      el.addEventListener("input", ()=>formatInputWithCommas(el));
     }
 
+    // Base pay + simple deductions
     attachMoneyFormatting(basePayEl);
     attachMoneyFormatting(monthlyDedsEl);
     monthlyDedsEl.addEventListener("input", updateAnnualDeds);
+
+    // Advanced fields formatting + auto-sum
+    for (const el of [pensionPctEl, nhfEl, nhisEl, lifeEl, od1AmtEl, od2AmtEl]){
+      attachMoneyFormatting(el);
+      el.addEventListener("input", ()=>syncAdvancedToSimple());
+    }
+
+    advDeds.addEventListener("toggle", ()=>syncAdvancedToSimple());
+
+    function computeAdvancedMonthlyDeds(){
+      // Pension = % of BASE PAY only
+      const basePay = parseMoney(basePayEl.value);
+      const baseFreq = baseFreqEl.value; // annual|monthly
+      const pct = parseMoney(pensionPctEl.value);
+
+      const pensionOnBase = (pct/100) * basePay;
+      const pensionMonthly = baseFreq === "annual" ? (pensionOnBase/12) : pensionOnBase;
+
+      const nhf = parseMoney(nhfEl.value);
+      const nhis = parseMoney(nhisEl.value);
+      const life = parseMoney(lifeEl.value);
+      const od1 = parseMoney(od1AmtEl.value);
+      const od2 = parseMoney(od2AmtEl.value);
+
+      const total = (Number.isFinite(pensionMonthly)?pensionMonthly:0) + nhf + nhis + life + od1 + od2;
+      return Math.max(0, total);
+    }
+
+    function syncAdvancedToSimple(){
+      if (!advDeds.open){
+        monthlyDedsEl.readOnly = false;
+        updateAnnualDeds();
+        return;
+      }
+      const totalMonthly = computeAdvancedMonthlyDeds();
+      monthlyDedsEl.value = totalMonthly ? formatMoney(Math.round(totalMonthly)) : "";
+      monthlyDedsEl.readOnly = true;
+      updateAnnualDeds();
+    }
+
+    // If base pay changes and advanced is open, re-sync (pension depends on base)
+    basePayEl.addEventListener("input", ()=>syncAdvancedToSimple());
+    baseFreqEl.addEventListener("change", ()=>syncAdvancedToSimple());
 
     btnAddRow.addEventListener("click", ()=>{
       allowBody.appendChild(makeRow({ name:"", frequency:"monthly", taxable:true }));
@@ -479,14 +596,12 @@ Author | Financial Strategy</div>
         setStatus("Computing…");
         validate();
 
-        // Ensure totals refreshed
         recalcTotals();
-        updateAnnualDeds();
+        syncAdvancedToSimple();
 
         const basePay = parseMoney(basePayEl.value);
         const baseFrequency = baseFreqEl.value;
 
-        // collect allowances
         const rows = Array.from(allowBody.querySelectorAll("tr"));
         const allowances = [];
         for (const r of rows){
@@ -520,8 +635,21 @@ Author | Financial Strategy</div>
     btnReset.addEventListener("click", ()=>{
       basePayEl.value = "";
       baseFreqEl.value = "annual";
+
+      // Simple deductions reset (unlock)
+      advDeds.open = false;
+      monthlyDedsEl.readOnly = false;
       monthlyDedsEl.value = "";
       annualDedsEl.value = "";
+
+      // Advanced fields reset
+      pensionPctEl.value = "8";
+      nhfEl.value = "";
+      nhisEl.value = "";
+      lifeEl.value = "";
+      od1AmtEl.value = "";
+      od2AmtEl.value = "";
+
       seedRows();
       rawOut.textContent = "{}";
       kpiGross.textContent = "—";
@@ -536,6 +664,7 @@ Author | Financial Strategy</div>
     seedRows();
     setStatus("Ready");
     recalcTotals();
+    syncAdvancedToSimple();
   </script>
 </body>
 </html>
