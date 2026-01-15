@@ -67,7 +67,8 @@
       background:rgba(255,255,255,.03);
       font-size:12px;color:var(--muted)
     }
-    .ok{color:ival(--ok)} .bad{color:var(--danger)}
+    .ok{color:var(--ok)}
+    .bad{color:var(--danger)}
     pre{
       white-space:pre-wrap;word-break:break-word;background:rgba(0,0,0,.25);
       border:1px solid var(--line);padding:12px;border-radius:14px;
@@ -124,6 +125,19 @@
       background:rgba(255,255,255,.03);
       font-size:12px;color:var(--muted);margin-left:10px;
     }
+
+    .modebar{
+      display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px;
+    }
+    .modebar .chip{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 10px;border-radius:999px;border:1px solid var(--line);
+      background:rgba(255,255,255,.02);
+      font-size:12px;color:var(--muted);
+      cursor:pointer;
+      user-select:none;
+    }
+    .modebar input{width:auto}
   </style>
 </head>
 
@@ -209,12 +223,19 @@ Author | Financial Strategy</div>
         <div class="section">
           <h2>Deductions</h2>
 
+          <!-- Mode selector (keeps your Option A behavior) -->
+          <div class="modebar">
+            <label class="chip"><input type="radio" name="dedMode" value="simple" id="dedModeSimple" checked /> Simple</label>
+            <label class="chip"><input type="radio" name="dedMode" value="advanced" id="dedModeAdv" /> Advanced</label>
+            <span class="tiny">Advanced auto-locks and auto-fills the simple deductions input.</span>
+          </div>
+
           <!-- Simple Mode -->
           <div class="row">
             <div class="field">
               <label>Total Monthly Deductions (Simple Mode)</label>
               <input id="monthlyDeds" class="money" type="text" inputmode="numeric" placeholder="e.g., 40,000" />
-              <div class="hint">If Advanced mode is open, this field becomes read-only and auto-filled.</div>
+              <div class="hint">If Advanced mode is active, this field becomes read-only and auto-filled.</div>
             </div>
             <div class="field">
               <label>Annualized Deductions (auto)</label>
@@ -222,60 +243,59 @@ Author | Financial Strategy</div>
             </div>
           </div>
 
-          <!-- Advanced Mode (Option A: auto-fill & read-only) -->
+          <!-- Advanced Mode -->
           <details id="advDeds">
             <summary>
               Advanced Deductions Breakdown
-              <span class="badge">Option A: Auto-sum + lock simple field</span>
+              <span class="badge">Itemize + annualize + auto-sum</span>
             </summary>
 
             <div class="tiny" style="margin-top:8px">
-              Pension is computed as <b>% of Base Pay only</b> (not allowances). All fields here are monthly.
+              Pension is computed as <b>% of Base Pay only</b> (not allowances).
             </div>
 
             <div class="row">
               <div class="field">
                 <label>Employee Pension (% of Base Pay)</label>
                 <input id="pensionPct" class="money" type="text" inputmode="numeric" value="8" />
+                <div class="hint">Used to auto-generate a monthly pension deduction row.</div>
               </div>
               <div class="field">
-                <label>NHF (Monthly)</label>
-                <input id="nhf" class="money" type="text" inputmode="numeric" placeholder="e.g., 2,500" />
-              </div>
-              <div class="field">
-                <label>NHIS / HMO (Monthly)</label>
-                <input id="nhis" class="money" type="text" inputmode="numeric" placeholder="e.g., 10,000" />
-              </div>
-              <div class="field">
-                <label>Life Assurance (Monthly)</label>
-                <input id="life" class="money" type="text" inputmode="numeric" placeholder="e.g., 5,000" />
+                <label>Computed Pension (Monthly)</label>
+                <input id="pensionMonthly" class="money" type="text" readonly />
               </div>
             </div>
 
             <table class="table">
               <thead>
                 <tr>
-                  <th style="width:40%">Other Deductible (Name)</th>
-                  <th style="width:40%">Amount (Monthly)</th>
-                  <th style="width:20%">Notes</th>
+                  <th style="width:38%">Deduction Name</th>
+                  <th style="width:22%">Amount</th>
+                  <th style="width:18%">Frequency</th>
+                  <th style="width:16%">Row Annualized</th>
+                  <th style="width:6%"></th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td><input id="od1Name" type="text" placeholder="e.g., Union dues" /></td>
-                  <td><input id="od1Amt" class="money" type="text" inputmode="numeric" placeholder="0" /></td>
-                  <td><span class="tiny">Optional</span></td>
-                </tr>
-                <tr>
-                  <td><input id="od2Name" type="text" placeholder="e.g., Professional levy" /></td>
-                  <td><input id="od2Amt" class="money" type="text" inputmode="numeric" placeholder="0" /></td>
-                  <td><span class="tiny">Optional</span></td>
-                </tr>
-              </tbody>
+              <tbody id="dedBody"></tbody>
             </table>
 
+            <div class="btnbar">
+              <button class="secondary" id="btnAddDed">+ Add Deduction Row</button>
+            </div>
+
+            <div class="totals">
+              <div class="tot">
+                <div class="t">Total Deductions (Annualized)</div>
+                <div class="v" id="totDedAnnual">—</div>
+              </div>
+              <div class="tot">
+                <div class="t">Total Deductions (Monthly Equivalent)</div>
+                <div class="v" id="totDedMonthlyEq">—</div>
+              </div>
+            </div>
+
             <div class="tiny" style="margin-top:10px">
-              When this section is open, Total Monthly Deductions is calculated automatically from these entries.
+              Advanced totals automatically populate the Simple Mode monthly deductions input.
             </div>
           </details>
         </div>
@@ -313,6 +333,7 @@ Author | Financial Strategy</div>
     import { runPAYE } from "./src/modules/paye/paye.js";
 
     const allowBody = document.getElementById("allowBody");
+    const dedBody = document.getElementById("dedBody");
 
     const basePayEl = document.getElementById("basePay");
     const baseFreqEl = document.getElementById("baseFreq");
@@ -321,19 +342,22 @@ Author | Financial Strategy</div>
     const annualDedsEl = document.getElementById("annualDeds");
 
     const advDeds = document.getElementById("advDeds");
+    const dedModeSimple = document.getElementById("dedModeSimple");
+    const dedModeAdv = document.getElementById("dedModeAdv");
+
     const pensionPctEl = document.getElementById("pensionPct");
-    const nhfEl = document.getElementById("nhf");
-    const nhisEl = document.getElementById("nhis");
-    const lifeEl = document.getElementById("life");
-    const od1AmtEl = document.getElementById("od1Amt");
-    const od2AmtEl = document.getElementById("od2Amt");
+    const pensionMonthlyEl = document.getElementById("pensionMonthly");
 
     const totMonthly = document.getElementById("totMonthly");
     const totQuarterly = document.getElementById("totQuarterly");
     const totAnnualOneoff = document.getElementById("totAnnualOneoff");
     const totAllowAnnualized = document.getElementById("totAllowAnnualized");
 
+    const totDedAnnual = document.getElementById("totDedAnnual");
+    const totDedMonthlyEq = document.getElementById("totDedMonthlyEq");
+
     const btnAddRow = document.getElementById("btnAddRow");
+    const btnAddDed = document.getElementById("btnAddDed");
     const btnCalc = document.getElementById("btnCalc");
     const btnReset = document.getElementById("btnReset");
     const statusPill = document.getElementById("statusPill");
@@ -344,7 +368,8 @@ Author | Financial Strategy</div>
     const kpiPayeMonthly = document.getElementById("kpiPayeMonthly");
     const rawOut = document.getElementById("rawOut");
 
-    const FREQ = ["monthly","quarterly","annual","one-off"];
+    const FREQ_ALLOW = ["monthly","quarterly","annual","one-off"];
+    const FREQ_DED = ["monthly","quarterly","annual","one-off"];
 
     function setStatus(text, state="ready"){
       statusPill.textContent = text;
@@ -367,10 +392,11 @@ Author | Financial Strategy</div>
     }
 
     function formatInputWithCommas(el){
-      const raw = el.value.replace(/,/g,"");
+      const raw = String(el.value ?? "").replace(/,/g,"");
       const digits = raw.replace(/[^\d]/g,"");
-      el.value = digits ? formatMoney(Number(digits)) : "";
-      el.setSelectionRange(el.value.length, el.value.length);
+      const next = digits ? formatMoney(Number(digits)) : "";
+      el.value = next;
+      // Do not force cursor management (can be annoying on mobile)
     }
 
     function annualize(amount, frequency){
@@ -383,7 +409,11 @@ Author | Financial Strategy</div>
       return a; // annual
     }
 
-    function makeRow({ name="", amount="", frequency="monthly", taxable=true } = {}){
+    function attachMoneyFormatting(el){
+      el.addEventListener("input", ()=>formatInputWithCommas(el));
+    }
+
+    function makeAllowanceRow({ name="", amount="", frequency="monthly", taxable=true } = {}){
       const tr = document.createElement("tr");
 
       const tdName = document.createElement("td");
@@ -404,7 +434,7 @@ Author | Financial Strategy</div>
 
       const tdFreq = document.createElement("td");
       const sel = document.createElement("select");
-      for (const f of FREQ){
+      for (const f of FREQ_ALLOW){
         const o = document.createElement("option");
         o.value = f;
         o.textContent = f === "one-off" ? "One-off" : f.charAt(0).toUpperCase() + f.slice(1);
@@ -435,16 +465,14 @@ Author | Financial Strategy</div>
         const amt = parseMoney(inAmt.value);
         const ann = annualize(amt, sel.value);
         span.textContent = ann ? ("₦ " + formatMoney(ann)) : "—";
-        recalcTotals();
+        recalcAllowanceTotals();
       }
 
-      inAmt.addEventListener("input", ()=>{
-        formatInputWithCommas(inAmt);
-        recalcRow();
-      });
+      attachMoneyFormatting(inAmt);
+      inAmt.addEventListener("input", recalcRow);
       sel.addEventListener("change", recalcRow);
       chk.addEventListener("change", recalcRow);
-      inName.addEventListener("input", recalcTotals);
+      inName.addEventListener("input", recalcAllowanceTotals);
 
       tr._get = () => ({
         name: inName.value.trim(),
@@ -457,24 +485,24 @@ Author | Financial Strategy</div>
       return tr;
     }
 
-    function seedRows(){
+    function seedAllowanceRows(){
       allowBody.innerHTML = "";
-      allowBody.appendChild(makeRow({ name:"Rent/Housing", frequency:"monthly", taxable:true }));
-      allowBody.appendChild(makeRow({ name:"Transportation", frequency:"monthly", taxable:true }));
-      allowBody.appendChild(makeRow({ name:"Furniture/Fittings", frequency:"monthly", taxable:true }));
-      allowBody.appendChild(makeRow({ name:"Entertainment", frequency:"monthly", taxable:true }));
-      for (let i=0;i<8;i++) allowBody.appendChild(makeRow({ name:"", frequency:"monthly", taxable:true }));
-      recalcTotals();
+      allowBody.appendChild(makeAllowanceRow({ name:"Rent/Housing", frequency:"monthly", taxable:true }));
+      allowBody.appendChild(makeAllowanceRow({ name:"Transportation", frequency:"monthly", taxable:true }));
+      allowBody.appendChild(makeAllowanceRow({ name:"Furniture/Fittings", frequency:"monthly", taxable:true }));
+      allowBody.appendChild(makeAllowanceRow({ name:"Entertainment", frequency:"monthly", taxable:true }));
+      for (let i=0;i<8;i++) allowBody.appendChild(makeAllowanceRow({ name:"", frequency:"monthly", taxable:true }));
+      recalcAllowanceTotals();
     }
 
-    function recalcTotals(){
+    function recalcAllowanceTotals(){
       const rows = Array.from(allowBody.querySelectorAll("tr"));
       let m=0,q=0,a=0,one=0,annualized=0;
 
       for (const r of rows){
         const item = r._get();
         if (!item.taxable) continue;
-        if (!item.amount || item.amount === 0) continue;
+        if (!item.amount) continue;
 
         const f = item.frequency;
         if (f === "monthly") m += item.amount;
@@ -491,67 +519,155 @@ Author | Financial Strategy</div>
       totAllowAnnualized.textContent = "₦ " + formatMoney(annualized);
     }
 
+    function makeDeductionRow({ name="", amount="", frequency="monthly" } = {}){
+      const tr = document.createElement("tr");
+
+      const tdName = document.createElement("td");
+      const inName = document.createElement("input");
+      inName.type = "text";
+      inName.value = name;
+      inName.placeholder = "e.g., NHF / NHIS / Union dues";
+      tdName.appendChild(inName);
+
+      const tdAmt = document.createElement("td");
+      const inAmt = document.createElement("input");
+      inAmt.type = "text";
+      inAmt.inputMode = "numeric";
+      inAmt.className = "money";
+      inAmt.value = amount;
+      inAmt.placeholder = "0";
+      tdAmt.appendChild(inAmt);
+
+      const tdFreq = document.createElement("td");
+      const sel = document.createElement("select");
+      for (const f of FREQ_DED){
+        const o = document.createElement("option");
+        o.value = f;
+        o.textContent = f === "one-off" ? "One-off" : f.charAt(0).toUpperCase() + f.slice(1);
+        if (f === frequency) o.selected = true;
+        sel.appendChild(o);
+      }
+      tdFreq.appendChild(sel);
+
+      const tdAnn = document.createElement("td");
+      const span = document.createElement("span");
+      span.className = "tiny";
+      span.textContent = "—";
+      tdAnn.appendChild(span);
+
+      const tdDel = document.createElement("td");
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "secondary";
+      del.textContent = "×";
+      del.title = "Remove row";
+      del.style.padding = "8px 10px";
+      del.style.borderRadius = "12px";
+      tdDel.appendChild(del);
+
+      tr.appendChild(tdName);
+      tr.appendChild(tdAmt);
+      tr.appendChild(tdFreq);
+      tr.appendChild(tdAnn);
+      tr.appendChild(tdDel);
+
+      function recalcRow(){
+        const amt = parseMoney(inAmt.value);
+        const ann = annualize(amt, sel.value);
+        span.textContent = ann ? ("₦ " + formatMoney(ann)) : "—";
+        recalcDeductionTotals();
+      }
+
+      attachMoneyFormatting(inAmt);
+      inAmt.addEventListener("input", recalcRow);
+      sel.addEventListener("change", recalcRow);
+      inName.addEventListener("input", recalcDeductionTotals);
+      del.addEventListener("click", ()=>{
+        tr.remove();
+        recalcDeductionTotals();
+      });
+
+      tr._get = () => ({
+        name: inName.value.trim() || "Other deduction",
+        amount: parseMoney(inAmt.value),
+        frequency: sel.value
+      });
+
+      recalcRow();
+      return tr;
+    }
+
+    function seedDeductionRows(){
+      dedBody.innerHTML = "";
+      // Start with common statutory buckets (editable)
+      dedBody.appendChild(makeDeductionRow({ name:"NHF", frequency:"monthly" }));
+      dedBody.appendChild(makeDeductionRow({ name:"NHIS / HMO", frequency:"monthly" }));
+      dedBody.appendChild(makeDeductionRow({ name:"Life Assurance", frequency:"monthly" }));
+      recalcDeductionTotals();
+    }
+
+    function computePensionMonthly(){
+      const basePay = parseMoney(basePayEl.value);
+      const baseFreq = baseFreqEl.value; // annual|monthly
+      const pct = parseMoney(pensionPctEl.value);
+
+      if (!basePay || basePay <= 0 || !pct) return 0;
+
+      const pensionOnBase = (pct/100) * basePay;
+      const pensionMonthly = (baseFreq === "annual") ? (pensionOnBase/12) : pensionOnBase;
+      return Math.max(0, pensionMonthly);
+    }
+
+    function recalcDeductionTotals(){
+      const pensionMonthly = computePensionMonthly();
+      pensionMonthlyEl.value = pensionMonthly ? formatMoney(Math.round(pensionMonthly)) : "";
+
+      const rows = Array.from(dedBody.querySelectorAll("tr")).map(tr => tr._get());
+      // Include pension as an implicit monthly deduction row for totals/payload
+      const allRows = [
+        ...(pensionMonthly > 0 ? [{ name:"Employee Pension", amount: pensionMonthly, frequency:"monthly" }] : []),
+        ...rows
+      ].filter(r => r.amount && r.amount > 0);
+
+      let totalAnnual = 0;
+      for (const r of allRows) totalAnnual += annualize(r.amount, r.frequency);
+
+      const monthlyEq = totalAnnual / 12;
+
+      totDedAnnual.textContent = "₦ " + formatMoney(Math.round(totalAnnual));
+      totDedMonthlyEq.textContent = "₦ " + formatMoney(Math.round(monthlyEq));
+
+      // Option A behavior: auto-fill + lock simple field when Advanced is active
+      syncAdvancedToSimple();
+    }
+
     function updateAnnualDeds(){
       const monthly = parseMoney(monthlyDedsEl.value);
       annualDedsEl.value = monthly ? formatMoney(monthly * 12) : "";
     }
 
-    function attachMoneyFormatting(el){
-      el.addEventListener("input", ()=>formatInputWithCommas(el));
-    }
-
-    // Base pay + simple deductions
-    attachMoneyFormatting(basePayEl);
-    attachMoneyFormatting(monthlyDedsEl);
-    monthlyDedsEl.addEventListener("input", updateAnnualDeds);
-
-    // Advanced fields formatting + auto-sum
-    for (const el of [pensionPctEl, nhfEl, nhisEl, lifeEl, od1AmtEl, od2AmtEl]){
-      attachMoneyFormatting(el);
-      el.addEventListener("input", ()=>syncAdvancedToSimple());
-    }
-
-    advDeds.addEventListener("toggle", ()=>syncAdvancedToSimple());
-
-    function computeAdvancedMonthlyDeds(){
-      // Pension = % of BASE PAY only
-      const basePay = parseMoney(basePayEl.value);
-      const baseFreq = baseFreqEl.value; // annual|monthly
-      const pct = parseMoney(pensionPctEl.value);
-
-      const pensionOnBase = (pct/100) * basePay;
-      const pensionMonthly = baseFreq === "annual" ? (pensionOnBase/12) : pensionOnBase;
-
-      const nhf = parseMoney(nhfEl.value);
-      const nhis = parseMoney(nhisEl.value);
-      const life = parseMoney(lifeEl.value);
-      const od1 = parseMoney(od1AmtEl.value);
-      const od2 = parseMoney(od2AmtEl.value);
-
-      const total = (Number.isFinite(pensionMonthly)?pensionMonthly:0) + nhf + nhis + life + od1 + od2;
-      return Math.max(0, total);
+    function isAdvancedMode(){
+      return dedModeAdv.checked === true;
     }
 
     function syncAdvancedToSimple(){
-      if (!advDeds.open){
+      if (!isAdvancedMode()){
         monthlyDedsEl.readOnly = false;
         updateAnnualDeds();
         return;
       }
-      const totalMonthly = computeAdvancedMonthlyDeds();
-      monthlyDedsEl.value = totalMonthly ? formatMoney(Math.round(totalMonthly)) : "";
+
+      // Ensure details is open when advanced selected (UX)
+      advDeds.open = true;
+
+      const annualText = (totDedAnnual.textContent || "").replace(/[^\d,]/g,"");
+      const totalAnnual = parseMoney(annualText);
+      const totalMonthlyEq = totalAnnual > 0 ? Math.round(totalAnnual / 12) : 0;
+
+      monthlyDedsEl.value = totalMonthlyEq ? formatMoney(totalMonthlyEq) : "";
       monthlyDedsEl.readOnly = true;
       updateAnnualDeds();
     }
-
-    // If base pay changes and advanced is open, re-sync (pension depends on base)
-    basePayEl.addEventListener("input", ()=>syncAdvancedToSimple());
-    baseFreqEl.addEventListener("change", ()=>syncAdvancedToSimple());
-
-    btnAddRow.addEventListener("click", ()=>{
-      allowBody.appendChild(makeRow({ name:"", frequency:"monthly", taxable:true }));
-      recalcTotals();
-    });
 
     function extractNum(obj, keys){
       for (const k of keys){
@@ -567,7 +683,7 @@ Author | Financial Strategy</div>
 
       const b = result?.breakdown;
       if (b){
-        const gross = b.baseAnnual + b.allowancesAnnual;
+        const gross = (Number(b.baseAnnual)||0) + (Number(b.allowancesAnnual)||0);
         kpiGross.textContent = "₦ " + formatMoney(gross);
         kpiGrossBreak.textContent =
           `Base: ₦${formatMoney(b.baseAnnual)} | Allowances: ₦${formatMoney(b.allowancesAnnual)} | Deductions: ₦${formatMoney(b.deductionsAnnual)}`;
@@ -591,20 +707,62 @@ Author | Financial Strategy</div>
       if (!base || base <= 0) throw new Error("Base Pay must be greater than 0.");
     }
 
+    // Money formatting
+    attachMoneyFormatting(basePayEl);
+    attachMoneyFormatting(monthlyDedsEl);
+    attachMoneyFormatting(pensionPctEl);
+
+    monthlyDedsEl.addEventListener("input", updateAnnualDeds);
+
+    // Keep pension in sync with base pay changes
+    basePayEl.addEventListener("input", recalcDeductionTotals);
+    baseFreqEl.addEventListener("change", recalcDeductionTotals);
+    pensionPctEl.addEventListener("input", recalcDeductionTotals);
+
+    // Mode switching
+    function applyModeUI(){
+      if (isAdvancedMode()){
+        advDeds.open = true;
+        monthlyDedsEl.readOnly = true;
+        recalcDeductionTotals();
+      } else {
+        monthlyDedsEl.readOnly = false;
+        updateAnnualDeds();
+      }
+    }
+    dedModeSimple.addEventListener("change", applyModeUI);
+    dedModeAdv.addEventListener("change", applyModeUI);
+
+    advDeds.addEventListener("toggle", ()=>{
+      // If user closes advanced details while advanced mode selected, reopen to prevent mismatch
+      if (isAdvancedMode() && !advDeds.open) advDeds.open = true;
+    });
+
+    btnAddRow.addEventListener("click", ()=>{
+      allowBody.appendChild(makeAllowanceRow({ name:"", frequency:"monthly", taxable:true }));
+      recalcAllowanceTotals();
+    });
+
+    btnAddDed.addEventListener("click", ()=>{
+      dedBody.appendChild(makeDeductionRow({ name:"", frequency:"monthly" }));
+      recalcDeductionTotals();
+    });
+
     btnCalc.addEventListener("click", ()=>{
       try{
         setStatus("Computing…");
         validate();
 
-        recalcTotals();
-        syncAdvancedToSimple();
+        recalcAllowanceTotals();
+        applyModeUI();
 
         const basePay = parseMoney(basePayEl.value);
         const baseFrequency = baseFreqEl.value;
 
-        const rows = Array.from(allowBody.querySelectorAll("tr"));
+        // Allowances
+        const allowRows = Array.from(allowBody.querySelectorAll("tr"));
         const allowances = [];
-        for (const r of rows){
+        for (const r of allowRows){
           const it = r._get();
           const hasName = it.name.length > 0;
           const hasAmt = it.amount && it.amount !== 0;
@@ -617,10 +775,24 @@ Author | Financial Strategy</div>
           });
         }
 
-        const monthlyDed = parseMoney(monthlyDedsEl.value);
-        const deductions = monthlyDed > 0
-          ? [{ name:"Total Monthly Deductions", amount: monthlyDed, frequency:"monthly" }]
-          : [];
+        // Deductions payload
+        let deductions = [];
+        if (isAdvancedMode()){
+          const pensionMonthly = computePensionMonthly();
+          if (pensionMonthly > 0){
+            deductions.push({ name:"Employee Pension", amount: pensionMonthly, frequency:"monthly" });
+          }
+          const dedRows = Array.from(dedBody.querySelectorAll("tr")).map(tr => tr._get());
+          for (const d of dedRows){
+            if (!d.amount || d.amount <= 0) continue;
+            deductions.push({ name: d.name, amount: d.amount, frequency: d.frequency });
+          }
+        } else {
+          const monthlyDed = parseMoney(monthlyDedsEl.value);
+          if (monthlyDed > 0){
+            deductions = [{ name:"Total Monthly Deductions", amount: monthlyDed, frequency:"monthly" }];
+          }
+        }
 
         const payload = { basePay, baseFrequency, allowances, deductions };
         const result = runPAYE(payload);
@@ -636,35 +808,39 @@ Author | Financial Strategy</div>
       basePayEl.value = "";
       baseFreqEl.value = "annual";
 
-      // Simple deductions reset (unlock)
+      // Mode reset
+      dedModeSimple.checked = true;
+      dedModeAdv.checked = false;
       advDeds.open = false;
+
+      // Simple deductions reset
       monthlyDedsEl.readOnly = false;
       monthlyDedsEl.value = "";
       annualDedsEl.value = "";
 
-      // Advanced fields reset
+      // Advanced reset
       pensionPctEl.value = "8";
-      nhfEl.value = "";
-      nhisEl.value = "";
-      lifeEl.value = "";
-      od1AmtEl.value = "";
-      od2AmtEl.value = "";
+      pensionMonthlyEl.value = "";
+      seedDeductionRows();
 
-      seedRows();
+      seedAllowanceRows();
       rawOut.textContent = "{}";
       kpiGross.textContent = "—";
       kpiGrossBreak.textContent = "—";
       kpiPayeAnnual.textContent = "—";
       kpiPayeMonthly.textContent = "—";
       setStatus("Ready");
-      recalcTotals();
+      recalcAllowanceTotals();
+      recalcDeductionTotals();
     });
 
     // Init
-    seedRows();
+    seedAllowanceRows();
+    seedDeductionRows();
     setStatus("Ready");
-    recalcTotals();
-    syncAdvancedToSimple();
+    recalcAllowanceTotals();
+    recalcDeductionTotals();
+    applyModeUI();
   </script>
 </body>
 </html>
