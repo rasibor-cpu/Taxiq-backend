@@ -79,11 +79,7 @@
     .table th{color:#dbe6ff;text-align:left;background:rgba(255,255,255,.03)}
     .table tr:last-child td{border-bottom:none}
 
-    /* Allowance name usability */
-    .namewide{
-      min-width: 28ch;
-      width: 100%;
-    }
+    .namewide{min-width:28ch;width:100%}
 
     .tiny{font-size:12px;color:var(--muted)}
     .pill{
@@ -110,7 +106,6 @@
     .kpi .s{margin-top:4px;font-size:12px;color:rgba(169,182,211,.85)}
     .section{margin-top:14px}
 
-    /* Money fields: 25+ chars visible */
     .money{
       width: 28ch;
       min-width: 28ch;
@@ -166,6 +161,29 @@
       user-select:none;
     }
     .modebar input{width:auto}
+
+    .toolbarline{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:6px;
+      padding-top:8px;
+      border-top:1px solid var(--line);
+    }
+    .toggle{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.02);
+      font-size:12px;
+      color:var(--muted);
+      user-select:none;
+    }
+    .toggle input{width:auto}
   </style>
 </head>
 
@@ -332,6 +350,19 @@ Author | Financial Strategy</div>
           <button id="btnCalc">Compute PAYE</button>
           <button class="secondary" id="btnReset">Reset</button>
         </div>
+
+        <div class="toolbarline">
+          <button class="secondary" id="btnSave">Save Session</button>
+          <button class="secondary" id="btnLoad">Load Saved</button>
+          <button class="secondary" id="btnClearSaved">Clear Saved</button>
+
+          <label class="toggle">
+            <input type="checkbox" id="autoSave" checked />
+            Auto-save on Compute
+          </label>
+
+          <span class="tiny" id="saveHint">No saved session detected.</span>
+        </div>
       </div>
 
       <!-- OUTPUTS -->
@@ -359,6 +390,8 @@ Author | Financial Strategy</div>
 
   <script type="module">
     import { runPAYE } from "./src/modules/paye/paye.js";
+
+    const STORAGE_KEY = "taxiq_paye_session_v1";
 
     const allowBody = document.getElementById("allowBody");
     const dedBody = document.getElementById("dedBody");
@@ -396,7 +429,17 @@ Author | Financial Strategy</div>
     const kpiPayeMonthly = document.getElementById("kpiPayeMonthly");
     const rawOut = document.getElementById("rawOut");
 
+    const btnSave = document.getElementById("btnSave");
+    const btnLoad = document.getElementById("btnLoad");
+    const btnClearSaved = document.getElementById("btnClearSaved");
+    const autoSaveEl = document.getElementById("autoSave");
+    const saveHint = document.getElementById("saveHint");
+
     const FREQ = ["monthly","quarterly","annual","one-off"];
+
+    function nowISO(){
+      try { return new Date().toISOString(); } catch { return ""; }
+    }
 
     function setStatus(text, state="ready"){
       statusPill.textContent = text;
@@ -418,7 +461,6 @@ Author | Financial Strategy</div>
       return x.toLocaleString(undefined, { maximumFractionDigits: 0 });
     }
 
-    // Mobile-friendly: format without forcing cursor
     function formatInputWithCommas(el){
       const raw = String(el.value ?? "").replace(/,/g,"");
       const digits = raw.replace(/[^\d]/g,"");
@@ -432,7 +474,7 @@ Author | Financial Strategy</div>
       if (f === "monthly") return a * 12;
       if (f === "quarterly") return a * 4;
       if (f === "one-off") return a;
-      return a; // annual
+      return a;
     }
 
     function attachMoneyFormatting(el){
@@ -742,18 +784,6 @@ Author | Financial Strategy</div>
       if (!base || base <= 0) throw new Error("Base Pay must be greater than 0.");
     }
 
-    // Formatters
-    attachMoneyFormatting(basePayEl);
-    attachMoneyFormatting(monthlyDedsEl);
-    attachMoneyFormatting(pensionPctEl);
-
-    monthlyDedsEl.addEventListener("input", updateAnnualDeds);
-
-    // Pension depends on base
-    basePayEl.addEventListener("input", recalcDeductionTotals);
-    baseFreqEl.addEventListener("change", recalcDeductionTotals);
-    pensionPctEl.addEventListener("input", recalcDeductionTotals);
-
     function applyModeUI(){
       if (isAdvancedMode()){
         advDeds.open = true;
@@ -764,6 +794,156 @@ Author | Financial Strategy</div>
         updateAnnualDeds();
       }
     }
+
+    // ---------- Save/Load ----------
+    function hasSaved(){
+      return !!localStorage.getItem(STORAGE_KEY);
+    }
+
+    function refreshSaveHint(){
+      if (!hasSaved()){
+        saveHint.textContent = "No saved session detected.";
+        return;
+      }
+      try{
+        const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        const ts = parsed?.meta?.savedAt || "";
+        saveHint.textContent = ts ? `Saved session found (${ts}).` : "Saved session found.";
+      } catch {
+        saveHint.textContent = "Saved session found (unreadable).";
+      }
+    }
+
+    function getState(){
+      const allowanceRows = Array.from(allowBody.querySelectorAll("tr")).map(tr => tr._get());
+      const deductionRows = Array.from(dedBody.querySelectorAll("tr")).map(tr => tr._get());
+
+      return {
+        meta: {
+          version: "v0.2.5",
+          savedAt: nowISO()
+        },
+        base: {
+          pay: parseMoney(basePayEl.value),
+          freq: baseFreqEl.value
+        },
+        mode: {
+          deductions: isAdvancedMode() ? "advanced" : "simple",
+          advOpen: !!advDeds.open
+        },
+        simpleDeductions: {
+          monthly: parseMoney(monthlyDedsEl.value)
+        },
+        advancedDeductions: {
+          pensionPct: parseMoney(pensionPctEl.value),
+          rows: deductionRows
+        },
+        allowances: allowanceRows,
+        ui: {
+          autoSave: !!autoSaveEl.checked
+        }
+      };
+    }
+
+    function setState(state){
+      if (!state || typeof state !== "object") throw new Error("Invalid saved state.");
+
+      // Base
+      const basePay = Number(state?.base?.pay || 0);
+      basePayEl.value = basePay ? formatMoney(Math.round(basePay)) : "";
+      baseFreqEl.value = state?.base?.freq === "monthly" ? "monthly" : "annual";
+
+      // Mode
+      const mode = state?.mode?.deductions === "advanced" ? "advanced" : "simple";
+      dedModeAdv.checked = (mode === "advanced");
+      dedModeSimple.checked = (mode !== "advanced");
+
+      // AutoSave
+      autoSaveEl.checked = !!state?.ui?.autoSave;
+
+      // Allowances
+      allowBody.innerHTML = "";
+      const aRows = Array.isArray(state?.allowances) ? state.allowances : [];
+      if (aRows.length){
+        for (const r of aRows){
+          allowBody.appendChild(makeAllowanceRow({
+            name: r?.name || "",
+            amount: (r?.amount ? formatMoney(Math.round(r.amount)) : ""),
+            frequency: FREQ.includes(r?.frequency) ? r.frequency : "monthly",
+            taxable: (r?.taxable !== false)
+          }));
+        }
+      } else {
+        seedAllowanceRows();
+      }
+
+      // Deductions
+      pensionPctEl.value = (state?.advancedDeductions?.pensionPct ? formatMoney(Math.round(state.advancedDeductions.pensionPct)) : "8");
+
+      dedBody.innerHTML = "";
+      const dRows = Array.isArray(state?.advancedDeductions?.rows) ? state.advancedDeductions.rows : [];
+      if (dRows.length){
+        for (const r of dRows){
+          dedBody.appendChild(makeDeductionRow({
+            name: r?.name || "",
+            amount: (r?.amount ? formatMoney(Math.round(r.amount)) : ""),
+            frequency: FREQ.includes(r?.frequency) ? r.frequency : "monthly"
+          }));
+        }
+      } else {
+        seedDeductionRows();
+      }
+
+      // Simple deductions monthly
+      const simpleMonthly = Number(state?.simpleDeductions?.monthly || 0);
+      monthlyDedsEl.value = simpleMonthly ? formatMoney(Math.round(simpleMonthly)) : "";
+
+      // Expand/collapse advanced panel as stored
+      advDeds.open = (mode === "advanced") ? true : !!state?.mode?.advOpen;
+
+      // Recompute totals + mode effects
+      recalcAllowanceTotals();
+      recalcDeductionTotals();
+      applyModeUI();
+      updateAnnualDeds();
+    }
+
+    function saveSession(){
+      const state = getState();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      refreshSaveHint();
+      rawOut.textContent = JSON.stringify({ saved: true, key: STORAGE_KEY, at: state.meta.savedAt }, null, 2);
+      setStatus("Saved", "ok");
+    }
+
+    function loadSession(){
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) throw new Error("No saved session found.");
+      const parsed = JSON.parse(raw);
+      setState(parsed);
+      refreshSaveHint();
+      rawOut.textContent = JSON.stringify({ loaded: true, key: STORAGE_KEY, savedAt: parsed?.meta?.savedAt || null }, null, 2);
+      setStatus("Loaded", "ok");
+    }
+
+    function clearSaved(){
+      localStorage.removeItem(STORAGE_KEY);
+      refreshSaveHint();
+      rawOut.textContent = JSON.stringify({ cleared: true, key: STORAGE_KEY }, null, 2);
+      setStatus("Cleared", "ok");
+    }
+
+    // ---------- Event wiring ----------
+    attachMoneyFormatting(basePayEl);
+    attachMoneyFormatting(monthlyDedsEl);
+    attachMoneyFormatting(pensionPctEl);
+
+    monthlyDedsEl.addEventListener("input", updateAnnualDeds);
+
+    basePayEl.addEventListener("input", recalcDeductionTotals);
+    baseFreqEl.addEventListener("change", recalcDeductionTotals);
+    pensionPctEl.addEventListener("input", recalcDeductionTotals);
+
     dedModeSimple.addEventListener("change", applyModeUI);
     dedModeAdv.addEventListener("change", applyModeUI);
 
@@ -781,6 +961,27 @@ Author | Financial Strategy</div>
       recalcDeductionTotals();
     });
 
+    btnSave.addEventListener("click", ()=>{
+      try{ saveSession(); } catch(e){
+        setStatus("Save failed", "bad");
+        rawOut.textContent = JSON.stringify({ error: String(e?.message || e) }, null, 2);
+      }
+    });
+
+    btnLoad.addEventListener("click", ()=>{
+      try{ loadSession(); } catch(e){
+        setStatus("Load failed", "bad");
+        rawOut.textContent = JSON.stringify({ error: String(e?.message || e) }, null, 2);
+      }
+    });
+
+    btnClearSaved.addEventListener("click", ()=>{
+      try{ clearSaved(); } catch(e){
+        setStatus("Clear failed", "bad");
+        rawOut.textContent = JSON.stringify({ error: String(e?.message || e) }, null, 2);
+      }
+    });
+
     btnCalc.addEventListener("click", ()=>{
       try{
         setStatus("Computing…");
@@ -792,7 +993,6 @@ Author | Financial Strategy</div>
         const basePay = parseMoney(basePayEl.value);
         const baseFrequency = baseFreqEl.value;
 
-        // Allowances
         const allowRows = Array.from(allowBody.querySelectorAll("tr"));
         const allowances = [];
         for (const r of allowRows){
@@ -808,7 +1008,6 @@ Author | Financial Strategy</div>
           });
         }
 
-        // Deductions
         let deductions = [];
         if (isAdvancedMode()){
           const pensionMonthly = computePensionMonthly();
@@ -831,6 +1030,11 @@ Author | Financial Strategy</div>
         const result = runPAYE(payload);
         render(result);
         setStatus("Done", "ok");
+
+        if (autoSaveEl.checked){
+          saveSession();
+          setStatus("Done + Saved", "ok");
+        }
       } catch(e){
         setStatus("Fix inputs", "bad");
         rawOut.textContent = JSON.stringify({ error: String(e?.message || e) }, null, 2);
@@ -865,6 +1069,7 @@ Author | Financial Strategy</div>
       recalcAllowanceTotals();
       recalcDeductionTotals();
       applyModeUI();
+      updateAnnualDeds();
     });
 
     // Init
@@ -874,6 +1079,18 @@ Author | Financial Strategy</div>
     recalcAllowanceTotals();
     recalcDeductionTotals();
     applyModeUI();
+    updateAnnualDeds();
+    refreshSaveHint();
+
+    // Attempt gentle auto-load if saved exists (does not override a typed session)
+    // Only auto-load if basePay is empty AND a saved session exists.
+    try{
+      if (!basePayEl.value && hasSaved()){
+        loadSession();
+      }
+    } catch {
+      // ignore
+    }
   </script>
 </body>
 </html>
