@@ -19,7 +19,6 @@
       --ok:#4ade80;
       --radius:18px;
     }
-
     *{box-sizing:border-box}
     body{
       margin:0;
@@ -29,31 +28,13 @@
                   var(--bg);
       color:var(--text);
     }
-
     .wrap{max-width:1100px;margin:0 auto;padding:22px 16px 60px}
-    .topbar{
-      display:flex;align-items:flex-start;justify-content:space-between;gap:18px;
-      margin-bottom:14px;
-    }
+    .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:14px;}
     h1{margin:0;font-size:26px;letter-spacing:.2px}
     .sub{margin-top:6px;color:var(--muted);font-size:14px;line-height:1.35}
-    .sig{
-      text-align:right;white-space:pre-line;color:var(--muted);
-      font-size:13px;line-height:1.2
-    }
-
-    .grid{
-      display:grid;
-      grid-template-columns: 1.1fr .9fr;
-      gap:16px;
-      margin-top:16px;
-    }
-
-    @media(max-width: 980px){
-      .grid{grid-template-columns:1fr}
-      .sig{text-align:left}
-    }
-
+    .sig{text-align:right;white-space:pre-line;color:var(--muted);font-size:13px;line-height:1.2}
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;margin-top:16px;}
+    @media(max-width:980px){.grid{grid-template-columns:1fr}.sig{text-align:left}}
     .card{
       background:linear-gradient(180deg, rgba(255,255,255,.03), transparent 40%), var(--card);
       border:1px solid var(--line);
@@ -61,59 +42,32 @@
       padding:16px;
       box-shadow:0 10px 30px rgba(0,0,0,.25);
     }
-
     .card h2{
-      margin:0 0 10px 0;
-      font-size:16px;color:#dbe6ff;
+      margin:0 0 10px 0;font-size:16px;color:#dbe6ff;
       display:flex;align-items:center;justify-content:space-between;gap:10px
     }
-
     .row{display:flex;gap:10px;flex-wrap:wrap}
-    .field{
-      flex:1 1 220px;
-      display:flex;flex-direction:column;gap:6px;
-      margin:8px 0;
-    }
+    .field{flex:1 1 220px;display:flex;flex-direction:column;gap:6px;margin:8px 0;}
     label{font-size:12px;color:var(--muted)}
     input, select{
       width:100%;
-      padding:11px 12px;
-      border-radius:12px;
-      border:1px solid var(--line);
-      background:var(--card2);
-      color:var(--text);
-      outline:none;
+      padding:11px 12px;border-radius:12px;border:1px solid var(--line);
+      background:var(--card2);color:var(--text);outline:none;
     }
     input::placeholder{color:rgba(169,182,211,.6)}
-    input[type="number"]{appearance:textfield}
     .hint{font-size:12px;color:rgba(169,182,211,.85);margin-top:4px}
-
     .btnbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
     button{
       padding:11px 14px;border-radius:14px;border:1px solid var(--line);
       background:linear-gradient(180deg, rgba(255,255,255,.06), transparent 35%), var(--btn);
-      color:var(--text);
-      cursor:pointer;
-      font-weight:600;
+      color:var(--text);cursor:pointer;font-weight:600;
     }
     button.secondary{background:linear-gradient(180deg, rgba(255,255,255,.04), transparent 40%), var(--btn2)}
-    button:disabled{opacity:.6;cursor:not-allowed}
-
     .table{
-      width:100%;
-      border-collapse:separate;
-      border-spacing:0;
-      overflow:hidden;
-      border:1px solid var(--line);
-      border-radius:14px;
-      margin-top:10px;
+      width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;
+      border:1px solid var(--line);border-radius:14px;margin-top:10px;
     }
-    .table th, .table td{
-      padding:10px 10px;
-      border-bottom:1px solid var(--line);
-      font-size:13px;
-      vertical-align:middle;
-    }
+    .table th,.table td{padding:10px 10px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle;}
     .table th{color:#dbe6ff;text-align:left;background:rgba(255,255,255,.03)}
     .table tr:last-child td{border-bottom:none}
     .tiny{font-size:12px;color:var(--muted)}
@@ -126,39 +80,20 @@
     .ok{color:var(--ok)}
     .bad{color:var(--danger)}
     pre{
-      white-space:pre-wrap;word-break:break-word;
-      background:rgba(0,0,0,.25);
-      border:1px solid var(--line);
-      padding:12px;border-radius:14px;
-      color:#dbe6ff;font-size:12px;line-height:1.35;
-      margin:10px 0 0 0;
+      white-space:pre-wrap;word-break:break-word;background:rgba(0,0,0,.25);
+      border:1px solid var(--line);padding:12px;border-radius:14px;
+      color:#dbe6ff;font-size:12px;line-height:1.35;margin:10px 0 0 0;
     }
-    .split{
-      display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap
-    }
-    .kpis{
-      display:grid;grid-template-columns:1fr 1fr;
-      gap:10px;margin-top:10px
-    }
+    .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
     @media(max-width:520px){.kpis{grid-template-columns:1fr}}
-    .kpi{
-      border:1px solid var(--line);
-      border-radius:14px;
-      background:rgba(255,255,255,.03);
-      padding:12px;
-    }
+    .kpi{border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.03);padding:12px;}
     .kpi .t{font-size:12px;color:var(--muted)}
     .kpi .v{margin-top:6px;font-size:18px;font-weight:800;color:#fff}
     .kpi .s{margin-top:4px;font-size:12px;color:rgba(169,182,211,.85)}
     .rightnote{font-size:12px;color:rgba(169,182,211,.85)}
-    .toggleline{
-      display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px
-    }
-    .checkbox{
-      display:flex;align-items:center;gap:8px;
-      font-size:13px;color:var(--muted)
-    }
+    .checkbox{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
     .checkbox input{width:auto}
+    .section{margin-top:14px}
   </style>
 </head>
 
@@ -168,7 +103,7 @@
       <div>
         <h1>TaxIQ — PAYE Calculator</h1>
         <div class="sub">
-          Compute Nigeria PAYE using an annualized earnings profile (base pay + allowances).<br/>
+          Compute Nigeria PAYE using an annualized earnings profile (base pay + allowances − deductions).<br/>
           Base pay defaults to <b>Annual</b>, but you may switch to <b>Monthly</b>.
         </div>
       </div>
@@ -201,59 +136,123 @@ Author | Financial Strategy</div>
           </div>
         </div>
 
-        <div class="toggleline">
-          <label class="checkbox">
-            <input id="includeNonTaxable" type="checkbox" checked />
-            Include taxable toggles (untick allowance if non-taxable)
-          </label>
+        <div class="section">
+          <h2>
+            Allowances (frequency-aware)
+            <span class="tiny">4 fixed + 8 custom lines</span>
+          </h2>
+
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="width:34%">Allowance Name</th>
+                <th style="width:18%">Amount</th>
+                <th style="width:18%">Frequency</th>
+                <th style="width:14%">Taxable?</th>
+                <th style="width:16%">Notes</th>
+              </tr>
+            </thead>
+            <tbody id="allowBody"></tbody>
+          </table>
+
+          <div class="rightnote" style="margin-top:10px">
+            Tip: If your payroll gives allowances monthly, set frequency to <b>Monthly</b>.
+            If it is paid once a year, set to <b>Annual</b> or <b>One-off</b>.
+          </div>
         </div>
 
-        <h2 style="margin-top:14px">
-          Allowances (frequency-aware)
-          <span class="tiny">4 fixed + 8 custom lines</span>
-        </h2>
+        <div class="section">
+          <h2>
+            Statutory Deductions (frequency-aware)
+            <span class="tiny">Pension + NHF + NHIS + Life</span>
+          </h2>
 
-        <table class="table" id="allowTable">
-          <thead>
-            <tr>
-              <th style="width:34%">Allowance Name</th>
-              <th style="width:18%">Amount</th>
-              <th style="width:18%">Frequency</th>
-              <th style="width:14%">Taxable?</th>
-              <th style="width:16%">Notes</th>
-            </tr>
-          </thead>
-          <tbody id="allowBody"></tbody>
-        </table>
+          <div class="row">
+            <div class="field">
+              <label>Pension (Employee) Mode</label>
+              <select id="pensionMode">
+                <option value="percent" selected>% of Base Pay</option>
+                <option value="amount">Fixed Amount</option>
+              </select>
+              <div class="hint">Most payrolls apply a % of base salary.</div>
+            </div>
+
+            <div class="field">
+              <label>Pension % (if % mode)</label>
+              <input id="pensionPct" type="number" inputmode="decimal" placeholder="e.g., 8" value="8" />
+              <div class="hint">Default 8% (edit if needed).</div>
+            </div>
+
+            <div class="field">
+              <label>Pension Amount (if fixed amount mode)</label>
+              <input id="pensionAmt" type="number" inputmode="decimal" placeholder="e.g., 40000" />
+              <div class="hint">Used only if you select “Fixed Amount”.</div>
+            </div>
+
+            <div class="field">
+              <label>Pension Frequency (if fixed amount)</label>
+              <select id="pensionFreq">
+                <option value="monthly" selected>Monthly</option>
+                <option value="quarterly">Quarterly</option>
+                <option value="annual">Annual</option>
+                <option value="one-off">One-off</option>
+              </select>
+            </div>
+          </div>
+
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="width:34%">Deduction</th>
+                <th style="width:18%">Amount</th>
+                <th style="width:18%">Frequency</th>
+                <th style="width:30%">Notes</th>
+              </tr>
+            </thead>
+            <tbody id="dedBody"></tbody>
+          </table>
+
+          <div class="rightnote" style="margin-top:10px">
+            These deductions reduce taxable income (where applicable). If you are unsure, leave blank or set to 0.
+          </div>
+        </div>
 
         <div class="btnbar">
           <button id="btnCalc">Compute PAYE</button>
           <button class="secondary" id="btnReset">Reset</button>
         </div>
-
-        <div class="rightnote" style="margin-top:10px">
-          Tip: If your payroll gives allowances monthly, set frequency to <b>Monthly</b>.
-          If it is paid once a year, set to <b>Annual</b> or <b>One-off</b>.
-        </div>
       </div>
 
       <!-- OUTPUTS -->
       <div class="card">
-        <h2 class="split">
+        <h2>
           Results
           <span class="pill" id="statusPill">Ready</span>
         </h2>
 
         <div class="kpis">
           <div class="kpi">
-            <div class="t">Annualized Gross Income (Base + Taxable Allowances)</div>
-            <div class="v" id="kpiAnnualIncome">—</div>
-            <div class="s" id="kpiBreakdown">—</div>
+            <div class="t">Annualized Gross (Base + Taxable Allowances)</div>
+            <div class="v" id="kpiGross">—</div>
+            <div class="s" id="kpiGrossBreak">—</div>
           </div>
+
+          <div class="kpi">
+            <div class="t">Taxable Income (after deductions/relief)</div>
+            <div class="v" id="kpiTaxable">—</div>
+            <div class="s" id="kpiDeds">—</div>
+          </div>
+
           <div class="kpi">
             <div class="t">PAYE (Annual)</div>
             <div class="v" id="kpiPayeAnnual">—</div>
             <div class="s" id="kpiPayeMonthly">—</div>
+          </div>
+
+          <div class="kpi">
+            <div class="t">Effective Tax Rate (approx.)</div>
+            <div class="v" id="kpiETR">—</div>
+            <div class="s">PAYE ÷ Annualized Gross</div>
           </div>
         </div>
 
@@ -265,24 +264,31 @@ Author | Financial Strategy</div>
     </div>
   </div>
 
-  <!-- IMPORTANT:
-       This imports your PAYE module directly from the repo.
-       It assumes you have runPAYE exporting from ./src/modules/paye/paye.js
-  -->
   <script type="module">
     import { runPAYE } from "./src/modules/paye/paye.js";
 
     const allowBody = document.getElementById("allowBody");
+    const dedBody = document.getElementById("dedBody");
+
     const basePayEl = document.getElementById("basePay");
     const baseFreqEl = document.getElementById("baseFreq");
+
+    const pensionModeEl = document.getElementById("pensionMode");
+    const pensionPctEl  = document.getElementById("pensionPct");
+    const pensionAmtEl  = document.getElementById("pensionAmt");
+    const pensionFreqEl = document.getElementById("pensionFreq");
+
     const btnCalc = document.getElementById("btnCalc");
     const btnReset = document.getElementById("btnReset");
     const statusPill = document.getElementById("statusPill");
 
-    const kpiAnnualIncome = document.getElementById("kpiAnnualIncome");
-    const kpiBreakdown = document.getElementById("kpiBreakdown");
+    const kpiGross = document.getElementById("kpiGross");
+    const kpiGrossBreak = document.getElementById("kpiGrossBreak");
+    const kpiTaxable = document.getElementById("kpiTaxable");
+    const kpiDeds = document.getElementById("kpiDeds");
     const kpiPayeAnnual = document.getElementById("kpiPayeAnnual");
     const kpiPayeMonthly = document.getElementById("kpiPayeMonthly");
+    const kpiETR = document.getElementById("kpiETR");
     const rawOut = document.getElementById("rawOut");
 
     function fmtN(n){
@@ -298,7 +304,7 @@ Author | Financial Strategy</div>
       if (state === "bad") statusPill.classList.add("bad");
     }
 
-    function makeRow({ name="", locked=false, amount="", freq="monthly", taxable=true, note="" }){
+    function makeAllowRow({ name="", locked=false, amount="", freq="monthly", taxable=true, note="" }){
       const tr = document.createElement("tr");
 
       const tdName = document.createElement("td");
@@ -318,12 +324,7 @@ Author | Financial Strategy</div>
 
       const tdFreq = document.createElement("td");
       const sel = document.createElement("select");
-      const opts = [
-        ["monthly","Monthly"],
-        ["quarterly","Quarterly"],
-        ["annual","Annual"],
-        ["one-off","One-off"]
-      ];
+      const opts = [["monthly","Monthly"],["quarterly","Quarterly"],["annual","Annual"],["one-off","One-off"]];
       for (const [v,t] of opts){
         const o = document.createElement("option");
         o.value = v; o.textContent = t;
@@ -364,62 +365,142 @@ Author | Financial Strategy</div>
       return tr;
     }
 
+    function makeDedRow({ name="", locked=false, amount="", freq="monthly", note="" }){
+      const tr = document.createElement("tr");
+
+      const tdName = document.createElement("td");
+      const nameInput = document.createElement("input");
+      nameInput.value = name;
+      nameInput.placeholder = locked ? "" : "Type deduction name…";
+      if (locked) nameInput.disabled = true;
+      tdName.appendChild(nameInput);
+
+      const tdAmt = document.createElement("td");
+      const amtInput = document.createElement("input");
+      amtInput.type = "number";
+      amtInput.inputMode = "decimal";
+      amtInput.placeholder = "0";
+      amtInput.value = amount;
+      tdAmt.appendChild(amtInput);
+
+      const tdFreq = document.createElement("td");
+      const sel = document.createElement("select");
+      const opts = [["monthly","Monthly"],["quarterly","Quarterly"],["annual","Annual"],["one-off","One-off"]];
+      for (const [v,t] of opts){
+        const o = document.createElement("option");
+        o.value = v; o.textContent = t;
+        if (v === freq) o.selected = true;
+        sel.appendChild(o);
+      }
+      tdFreq.appendChild(sel);
+
+      const tdNote = document.createElement("td");
+      const noteSpan = document.createElement("span");
+      noteSpan.className = "tiny";
+      noteSpan.textContent = note;
+      tdNote.appendChild(noteSpan);
+
+      tr.appendChild(tdName);
+      tr.appendChild(tdAmt);
+      tr.appendChild(tdFreq);
+      tr.appendChild(tdNote);
+
+      tr._get = () => ({
+        name: nameInput.value?.trim() || "",
+        amount: Number(amtInput.value || 0),
+        frequency: sel.value,
+      });
+
+      return tr;
+    }
+
     function buildAllowanceTable(){
       allowBody.innerHTML = "";
-
-      // Fixed allowances requested
       const fixed = [
         { name:"Rent/Housing", locked:true, note:"Fixed field" },
         { name:"Transportation", locked:true, note:"Fixed field" },
         { name:"Furniture/Fittings", locked:true, note:"Fixed field" },
         { name:"Entertainment", locked:true, note:"Fixed field" },
       ];
-
       for (const f of fixed){
-        allowBody.appendChild(makeRow({ ...f, freq:"monthly", taxable:true }));
+        allowBody.appendChild(makeAllowRow({ ...f, freq:"monthly", taxable:true }));
       }
-
-      // 8 custom lines
       for (let i=0;i<8;i++){
-        allowBody.appendChild(
-          makeRow({ name:"", locked:false, amount:"", freq:"monthly", taxable:true, note:"Custom" })
-        );
+        allowBody.appendChild(makeAllowRow({ name:"", locked:false, amount:"", freq:"monthly", taxable:true, note:"Custom" }));
+      }
+    }
+
+    function buildDeductionTable(){
+      dedBody.innerHTML = "";
+      const fixed = [
+        { name:"NHF", locked:true, note:"Common statutory deduction" },
+        { name:"NHIS / HMO", locked:true, note:"If applicable" },
+        { name:"Life Assurance", locked:true, note:"If applicable" },
+      ];
+      for (const f of fixed){
+        dedBody.appendChild(makeDedRow({ ...f, freq:"monthly" }));
+      }
+      // 2 other deductible lines
+      for (let i=0;i<2;i++){
+        dedBody.appendChild(makeDedRow({ name:"", locked:false, amount:"", freq:"monthly", note:"Other deductible" }));
       }
     }
 
     function collectAllowances(){
       const rows = Array.from(allowBody.querySelectorAll("tr"));
       const allowances = [];
-
       for (const r of rows){
         const item = r._get();
-        // Keep row if it has a name OR a positive amount
         const hasName = (item.name && item.name.length > 0);
         const hasAmt = Number.isFinite(item.amount) && item.amount !== 0;
-
         if (!hasName && !hasAmt) continue;
-
-        // If user typed amount but left name blank, assign generic
         const name = hasName ? item.name : "Other allowance";
-
-        allowances.push({
-          name,
-          amount: item.amount || 0,
-          frequency: item.frequency || "monthly",
-          taxable: item.taxable !== false, // default true
-        });
+        allowances.push({ name, amount: item.amount || 0, frequency: item.frequency || "monthly", taxable: item.taxable !== false });
       }
       return allowances;
     }
 
-    function extractPayeValue(result){
-      // Try common keys. If unknown, return null.
-      const candidates = [
-        "paye", "PAYE", "tax", "taxPayable", "annualTax", "payeAnnual", "paye_due"
-      ];
-      for (const k of candidates){
-        if (result && Object.prototype.hasOwnProperty.call(result, k) && Number.isFinite(Number(result[k]))){
-          return Number(result[k]);
+    function collectDeductions(){
+      const deductions = [];
+
+      // Pension: percent-of-base or fixed amount
+      const pensionMode = pensionModeEl.value;
+      const basePay = Number(basePayEl.value || 0);
+      const baseFreq = baseFreqEl.value;
+
+      if (pensionMode === "percent"){
+        const pct = Number(pensionPctEl.value || 0);
+        if (Number.isFinite(pct) && pct > 0 && basePay > 0){
+          // apply % to BASE PAY only (not allowances)
+          // If base is monthly, pension is monthly; if base is annual, pension is annual.
+          const pensionAmount = (pct/100) * basePay;
+          deductions.push({ name:"Pension (Employee)", amount:pensionAmount, frequency: baseFreq });
+        }
+      } else {
+        const amt = Number(pensionAmtEl.value || 0);
+        if (Number.isFinite(amt) && amt > 0){
+          deductions.push({ name:"Pension (Employee)", amount:amt, frequency: pensionFreqEl.value });
+        }
+      }
+
+      // Fixed deductions table
+      const rows = Array.from(dedBody.querySelectorAll("tr"));
+      for (const r of rows){
+        const item = r._get();
+        const hasName = (item.name && item.name.length > 0);
+        const hasAmt = Number.isFinite(item.amount) && item.amount !== 0;
+        if (!hasName && !hasAmt) continue;
+        const name = hasName ? item.name : "Other deduction";
+        deductions.push({ name, amount: item.amount || 0, frequency: item.frequency || "monthly" });
+      }
+
+      return deductions;
+    }
+
+    function extractNum(obj, keys){
+      for (const k of keys){
+        if (obj && Object.prototype.hasOwnProperty.call(obj,k) && Number.isFinite(Number(obj[k]))){
+          return Number(obj[k]);
         }
       }
       return null;
@@ -428,23 +509,42 @@ Author | Financial Strategy</div>
     function render(result){
       rawOut.textContent = JSON.stringify(result, null, 2);
 
-      if (result && result.breakdown){
-        const b = result.breakdown;
-        kpiAnnualIncome.textContent = "₦ " + fmtN(b.annualIncome);
-        kpiBreakdown.textContent =
-          `Base: ₦${fmtN(b.baseAnnual)} | Allowances: ₦${fmtN(b.allowancesAnnual)} | Deductions: ₦${fmtN(b.deductionsAnnual)}`;
+      const b = result?.breakdown;
+      if (b){
+        kpiGross.textContent = "₦ " + fmtN(b.annualIncome + (b.deductionsAnnual || 0)); // gross before deductions
+        kpiGrossBreak.textContent = `Base: ₦${fmtN(b.baseAnnual)} | Allowances: ₦${fmtN(b.allowancesAnnual)} | Deductions: ₦${fmtN(b.deductionsAnnual)}`;
+
+        // Some engines return taxableIncome; show if available
+        const taxableIncome = extractNum(result, ["taxableIncome"]);
+        if (taxableIncome !== null){
+          kpiTaxable.textContent = "₦ " + fmtN(taxableIncome);
+        } else {
+          kpiTaxable.textContent = "₦ " + fmtN(b.annualIncome);
+        }
+        kpiDeds.textContent = `Deductions applied: ₦${fmtN(b.deductionsAnnual)}`;
       } else {
-        kpiAnnualIncome.textContent = "—";
-        kpiBreakdown.textContent = "—";
+        kpiGross.textContent = "—";
+        kpiGrossBreak.textContent = "—";
+        kpiTaxable.textContent = "—";
+        kpiDeds.textContent = "—";
       }
 
-      const payeAnnual = extractPayeValue(result);
-      if (payeAnnual !== null){
-        kpiPayeAnnual.textContent = "₦ " + fmtN(payeAnnual);
-        kpiPayeMonthly.textContent = `≈ ₦ ${fmtN(payeAnnual/12)} per month`;
+      const paye = extractNum(result, ["paye","tax","taxPayable","annualTax"]);
+      if (paye !== null){
+        kpiPayeAnnual.textContent = "₦ " + fmtN(paye);
+        kpiPayeMonthly.textContent = `≈ ₦ ${fmtN(paye/12)} per month`;
+
+        const gross = b ? (b.annualIncome + (b.deductionsAnnual || 0)) : null;
+        if (gross && gross > 0){
+          const etr = (paye / gross) * 100;
+          kpiETR.textContent = etr.toFixed(2) + "%";
+        } else {
+          kpiETR.textContent = "—";
+        }
       } else {
         kpiPayeAnnual.textContent = "—";
         kpiPayeMonthly.textContent = "—";
+        kpiETR.textContent = "—";
       }
     }
 
@@ -460,16 +560,11 @@ Author | Financial Strategy</div>
         setStatus("Computing…");
         validate();
 
-        const basePay = Number(basePayEl.value || 0);
-        const baseFrequency = baseFreqEl.value; // annual | monthly
-
-        const allowances = collectAllowances();
-
         const payload = {
-          basePay,
-          baseFrequency,
-          allowances,
-          deductions: [] // reserved for next phase
+          basePay: Number(basePayEl.value || 0),
+          baseFrequency: baseFreqEl.value,
+          allowances: collectAllowances(),
+          deductions: collectDeductions(),
         };
 
         const result = runPAYE(payload);
@@ -484,17 +579,28 @@ Author | Financial Strategy</div>
     btnReset.addEventListener("click", () => {
       basePayEl.value = "";
       baseFreqEl.value = "annual";
+      pensionModeEl.value = "percent";
+      pensionPctEl.value = "8";
+      pensionAmtEl.value = "";
+      pensionFreqEl.value = "monthly";
+
       buildAllowanceTable();
+      buildDeductionTable();
+
       rawOut.textContent = "{}";
-      kpiAnnualIncome.textContent = "—";
-      kpiBreakdown.textContent = "—";
+      kpiGross.textContent = "—";
+      kpiGrossBreak.textContent = "—";
+      kpiTaxable.textContent = "—";
+      kpiDeds.textContent = "—";
       kpiPayeAnnual.textContent = "—";
       kpiPayeMonthly.textContent = "—";
+      kpiETR.textContent = "—";
       setStatus("Ready");
     });
 
     // Init
     buildAllowanceTable();
+    buildDeductionTable();
     setStatus("Ready");
   </script>
 </body>
