@@ -60,6 +60,7 @@
       line-height:1;
       min-width:40px;
     }
+    button.small{padding:8px 10px;border-radius:12px;font-weight:800}
 
     .table{
       width:100%;
@@ -219,6 +220,28 @@
       user-select:none;
     }
     .toggle input{width:auto}
+
+    .historyHeader{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
+      margin-top:10px;
+    }
+    .historyList{
+      margin-top:10px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      overflow:hidden;
+    }
+    .histRow{
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+      background:rgba(255,255,255,.02);
+    }
+    .histRow:last-child{border-bottom:none}
+    .histMeta{display:flex; flex-direction:column; gap:2px}
+    .histTitle{font-weight:900;color:#fff;font-size:13px}
+    .histSub{color:rgba(169,182,211,.85);font-size:12px}
+    .histBtns{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
   </style>
 </head>
 
@@ -229,7 +252,7 @@
         <h1>TaxIQ — Tax Calculator</h1>
         <div class="sub">
           PAYE module: annualized earnings profile = base pay + taxable allowances − annualized deductions.<br/>
-          End-of-period output: gross for period → PAYE for period → net for period, plus reconciliation vs tax withheld.
+          End-of-period output: gross → PAYE → net, plus reconciliation vs tax withheld. Includes print slip + saved slips history.
         </div>
       </div>
       <div class="sig">Robert Asibor
@@ -496,7 +519,21 @@ Author | Financial Strategy</div>
           <button class="secondary" id="btnCopy">Copy Summary</button>
           <button class="secondary" id="btnDownload">Download JSON</button>
           <button class="secondary" id="btnPrint">Print Slip</button>
+          <button class="secondary" id="btnSaveSlip">Save Slip</button>
           <span class="tiny" id="copyHint">—</span>
+        </div>
+
+        <div class="section">
+          <h2>Saved Slips <span class="pill" id="slipCountPill">0</span></h2>
+
+          <div class="historyHeader">
+            <div class="tiny" id="histHint">Your saved slips are stored on this device (LocalStorage).</div>
+            <div class="histBtns">
+              <button class="secondary small" id="btnClearSlips">Clear All Slips</button>
+            </div>
+          </div>
+
+          <div class="historyList" id="historyList"></div>
         </div>
 
         <div class="tiny" style="margin-top:12px">Debug / Errors (always visible):</div>
@@ -509,6 +546,8 @@ Author | Financial Strategy</div>
     import { runPAYE } from "./src/modules/paye/paye.js";
 
     const STORAGE_KEY = "taxiq_paye_session_v2";
+    const SLIPS_KEY = "taxiq_saved_slips_v1";
+    const MAX_SLIPS = 50;
 
     const allowBody = document.getElementById("allowBody");
     const dedBody = document.getElementById("dedBody");
@@ -569,8 +608,10 @@ Author | Financial Strategy</div>
     const btnCopy = document.getElementById("btnCopy");
     const btnDownload = document.getElementById("btnDownload");
     const btnPrint = document.getElementById("btnPrint");
-    const copyHint = document.getElementById("copyHint");
+    const btnSaveSlip = document.getElementById("btnSaveSlip");
+    const btnClearSlips = document.getElementById("btnClearSlips");
 
+    const copyHint = document.getElementById("copyHint");
     const rawOut = document.getElementById("rawOut");
 
     const btnSave = document.getElementById("btnSave");
@@ -579,16 +620,19 @@ Author | Financial Strategy</div>
     const autoSaveEl = document.getElementById("autoSave");
     const saveHint = document.getElementById("saveHint");
 
+    const historyList = document.getElementById("historyList");
+    const slipCountPill = document.getElementById("slipCountPill");
+    const histHint = document.getElementById("histHint");
+
     const FREQ = ["monthly","quarterly","annual","one-off"];
 
     let lastResult = null;
     let lastPayload = null;
 
     function nowISO(){ try { return new Date().toISOString(); } catch { return ""; } }
-
-    function humanTS(){
+    function humanTS(iso){
       try{
-        const d = new Date();
+        const d = iso ? new Date(iso) : new Date();
         return d.toLocaleString();
       } catch { return ""; }
     }
@@ -656,6 +700,37 @@ Author | Financial Strategy</div>
       return 1/12;
     }
 
+    function extractNum(obj, keys){
+      for (const k of keys){
+        if (obj && Object.prototype.hasOwnProperty.call(obj,k) && Number.isFinite(Number(obj[k]))){
+          return Number(obj[k]);
+        }
+      }
+      return null;
+    }
+
+    function computeDerived(result){
+      const grossAnnual = Number(result?.breakdown?.baseAnnual || 0) + Number(result?.breakdown?.allowancesAnnual || 0);
+      const payeAnnual = extractNum(result, ["paye","tax","taxPayable","annualTax"]) ?? 0;
+
+      const annualIncome = Number(result?.annualIncome ?? result?.breakdown?.annualIncome ?? 0);
+      const relief = Number(result?.relief ?? 0);
+      const taxableIncome = Number(result?.taxableIncome ?? 0);
+
+      const effRate = grossAnnual > 0 ? (payeAnnual / grossAnnual) : 0;
+
+      const f = periodFactor();
+      const grossPeriod = grossAnnual * f;
+      const payePeriod = payeAnnual * f;
+      const netPeriod = Math.max(0, grossPeriod - payePeriod);
+
+      const withheld = parseMoney(taxWithheldEl.value);
+      const balance = payePeriod - withheld;
+
+      return { grossAnnual, payeAnnual, annualIncome, relief, taxableIncome, effRate, grossPeriod, payePeriod, netPeriod, withheld, balance };
+    }
+
+    // -------- Allowances UI --------
     function makeAllowanceRow({ name="", amount="", frequency="monthly", taxable=true } = {}){
       const tr = document.createElement("tr");
 
@@ -779,6 +854,7 @@ Author | Financial Strategy</div>
       totAllowAnnualized.textContent = "₦ " + formatMoney(annualized);
     }
 
+    // -------- Deductions UI --------
     function makeDeductionRow({ name="", amount="", frequency="monthly" } = {}){
       const tr = document.createElement("tr");
 
@@ -916,36 +992,7 @@ Author | Financial Strategy</div>
       updateAnnualDeds();
     }
 
-    function extractNum(obj, keys){
-      for (const k of keys){
-        if (obj && Object.prototype.hasOwnProperty.call(obj,k) && Number.isFinite(Number(obj[k]))){
-          return Number(obj[k]);
-        }
-      }
-      return null;
-    }
-
-    function computeDerived(result){
-      const grossAnnual = Number(result?.breakdown?.baseAnnual || 0) + Number(result?.breakdown?.allowancesAnnual || 0);
-      const payeAnnual = extractNum(result, ["paye","tax","taxPayable","annualTax"]) ?? 0;
-
-      const annualIncome = Number(result?.annualIncome ?? result?.breakdown?.annualIncome ?? 0);
-      const relief = Number(result?.relief ?? 0);
-      const taxableIncome = Number(result?.taxableIncome ?? 0);
-
-      const effRate = grossAnnual > 0 ? (payeAnnual / grossAnnual) : 0;
-
-      const f = periodFactor();
-      const grossPeriod = grossAnnual * f;
-      const payePeriod = payeAnnual * f;
-      const netPeriod = Math.max(0, grossPeriod - payePeriod);
-
-      const withheld = parseMoney(taxWithheldEl.value);
-      const balance = payePeriod - withheld;
-
-      return { grossAnnual, payeAnnual, annualIncome, relief, taxableIncome, effRate, grossPeriod, payePeriod, netPeriod, withheld, balance };
-    }
-
+    // -------- Render cards --------
     function clearOutputCards(){
       kpiGrossPeriod.textContent = "—";
       kpiGrossPeriodSub.textContent = "—";
@@ -1102,6 +1149,333 @@ Author | Financial Strategy</div>
       return { basePay, baseFrequency, allowances, deductions };
     }
 
+    // ---------- Print Slip ----------
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+    function formatN(n){ return "₦ " + formatMoney(Math.round(Number(n||0))); }
+
+    function buildSlipHTML(slip){
+      const label = slip.reportingPeriodLabel;
+      const mode = slip.mode;
+      const reconTitle = slip.reconTitle;
+
+      return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TaxIQ — Tax Summary Slip</title>
+  <style>
+    :root{ --ink:#0b1020; --muted:#51607a; --line:#d9e0ea; }
+    *{box-sizing:border-box}
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif; color:var(--ink); background:#fff; }
+    .page{ max-width:820px; margin:28px auto; padding:0 18px 40px; }
+    .hdr{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; padding:14px 0 10px; border-bottom:2px solid var(--line); }
+    .brand h1{ margin:0; font-size:20px; letter-spacing:.2px; }
+    .brand .sub{ margin-top:6px; color:var(--muted); font-size:12px; line-height:1.3; }
+    .meta{ text-align:right; font-size:12px; color:var(--muted); line-height:1.4; white-space:pre-line; }
+    .boxgrid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
+    @media print { .page{ margin:0; max-width:100%; } }
+    @media(max-width:640px){ .boxgrid{ grid-template-columns:1fr; } .meta{text-align:left} }
+    .box{ border:1px solid var(--line); border-radius:12px; padding:12px; }
+    .box .t{ font-size:12px; color:var(--muted); }
+    .box .v{ margin-top:6px; font-size:18px; font-weight:900; }
+    .row{ margin-top:14px; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+    table{ width:100%; border-collapse:collapse; }
+    th,td{ padding:10px 12px; border-bottom:1px solid var(--line); font-size:12px; text-align:left; }
+    th{ background:#f6f8fb; color:#22304a; }
+    tr:last-child td{ border-bottom:none; }
+    .foot{ margin-top:14px; color:var(--muted); font-size:11px; line-height:1.35; }
+    .btns{ margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; }
+    .btn{ border:1px solid var(--line); padding:10px 12px; border-radius:10px; background:#f6f8fb; cursor:pointer; font-weight:800; }
+    @media print { .btns{ display:none; } }
+    .tag{ display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid var(--line); font-size:11px; color:#22304a; background:#f6f8fb; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="hdr">
+      <div class="brand">
+        <h1>TaxIQ — Tax Summary Slip</h1>
+        <div class="sub">
+          PAYE (Nigeria) • Reporting Period Summary<br/>
+          This slip is an informational summary based on provided inputs.
+        </div>
+      </div>
+      <div class="meta">${esc("Generated: " + slip.generatedHuman)}
+${esc("Reporting Period: " + label)}
+${esc("Mode: " + mode)}
+${slip.userLabel ? esc("Label: " + slip.userLabel) : ""}</div>
+    </div>
+
+    <div class="boxgrid">
+      <div class="box">
+        <div class="t">Base Pay</div>
+        <div class="v">${esc(formatN(slip.basePay))}</div>
+        <div class="t" style="margin-top:6px">Frequency: ${esc(slip.baseFreq)}</div>
+      </div>
+
+      <div class="box">
+        <div class="t">Reconciliation Status</div>
+        <div class="v">${esc(reconTitle)}</div>
+        <div class="t" style="margin-top:6px">Tax Withheld (${esc(label)}): ${esc(formatN(slip.withheld))}</div>
+      </div>
+    </div>
+
+    <div class="boxgrid">
+      <div class="box">
+        <div class="t">Gross (${esc(label)})</div>
+        <div class="v">${esc(formatN(slip.grossPeriod))}</div>
+      </div>
+      <div class="box">
+        <div class="t">PAYE Liability (${esc(label)})</div>
+        <div class="v">${esc(formatN(slip.payePeriod))}</div>
+      </div>
+      <div class="box">
+        <div class="t">Net (${esc(label)})</div>
+        <div class="v">${esc(formatN(slip.netPeriod))}</div>
+      </div>
+      <div class="box">
+        <div class="t">Balance Payable / (Refund)</div>
+        <div class="v">${esc(formatN(slip.balanceAbs))}</div>
+        <div class="t" style="margin-top:6px">${esc(reconTitle)}</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <table>
+        <thead>
+          <tr>
+            <th colspan="2">Annual Reference (Audit)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Annual Gross</td><td>${esc(formatN(slip.grossAnnual))}</td></tr>
+          <tr><td>Annual PAYE</td><td>${esc(formatN(slip.payeAnnual))}</td></tr>
+          <tr><td>Annual Income (after deductions)</td><td>${esc(formatN(slip.annualIncome))}</td></tr>
+          <tr><td>Relief Applied</td><td>${esc(formatN(slip.relief))}</td></tr>
+          <tr><td>Taxable Income</td><td>${esc(formatN(slip.taxableIncome))}</td></tr>
+          <tr><td>Effective Tax Rate (Annual)</td><td>${esc(slip.effRatePct.toFixed(2) + "%")}</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="foot">
+      <span class="tag">TaxIQ</span>
+      <div style="margin-top:8px">
+        Notes: Period figures are derived by scaling annual values to the selected reporting period. If employment started mid-year or ended mid-year, a pro-rated tax computation mode may be required.
+      </div>
+    </div>
+
+    <div class="btns">
+      <button class="btn" onclick="window.print()">Print / Save as PDF</button>
+      <button class="btn" onclick="window.close()">Close</button>
+    </div>
+  </div>
+</body>
+</html>`;
+    }
+
+    function openPrintWindow(html){
+      const w = window.open("", "_blank");
+      if (!w){
+        setStatus("Popup blocked", "bad");
+        rawOut.textContent = JSON.stringify({ error: "Popup blocked by browser. Please allow popups for this site." }, null, 2);
+        return;
+      }
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+      w.focus();
+    }
+
+    function currentSlipObject(userLabel=""){
+      if (!lastResult) return null;
+
+      const d = computeDerived(lastResult);
+      const label = periodLabel();
+      const mode = isAdvancedMode() ? "Advanced deductions" : "Simple deductions";
+
+      const basePay = parseMoney(basePayEl.value);
+      const baseFreq = baseFreqEl.value;
+
+      const bal = d.balance;
+      const balanceAbs = Math.abs(bal);
+
+      let reconTitle = "Settled";
+      if (balanceAbs >= 0.5) reconTitle = bal > 0 ? "Balance Payable" : "Overpaid (Refund)";
+
+      const iso = nowISO();
+
+      return {
+        id: crypto?.randomUUID ? crypto.randomUUID() : ("slip_" + Math.random().toString(16).slice(2)),
+        createdAt: iso,
+        createdHuman: humanTS(iso),
+        generatedHuman: humanTS(iso),
+        userLabel: (userLabel || "").trim(),
+        reportingPeriod: reportPeriodEl.value,
+        reportingPeriodLabel: label,
+        mode,
+        basePay,
+        baseFreq,
+        withheld: d.withheld,
+        grossPeriod: d.grossPeriod,
+        payePeriod: d.payePeriod,
+        netPeriod: d.netPeriod,
+        balanceAbs,
+        reconTitle,
+
+        // annual reference
+        grossAnnual: d.grossAnnual,
+        payeAnnual: d.payeAnnual,
+        annualIncome: d.annualIncome,
+        relief: d.relief,
+        taxableIncome: d.taxableIncome,
+        effRatePct: (d.effRate * 100),
+
+        // for traceability
+        inputsSnapshot: {
+          payload: lastPayload,
+          withheld: d.withheld,
+          reportPeriod: reportPeriodEl.value
+        }
+      };
+    }
+
+    function printCurrentSlip(){
+      const slip = currentSlipObject("");
+      if (!slip){
+        setStatus("Compute first", "bad");
+        rawOut.textContent = JSON.stringify({ error: "Please compute PAYE before printing." }, null, 2);
+        return;
+      }
+      const html = buildSlipHTML(slip);
+      openPrintWindow(html);
+    }
+
+    // -------- Saved Slips (History) --------
+    function readSlips(){
+      try{
+        const raw = localStorage.getItem(SLIPS_KEY);
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function writeSlips(arr){
+      const safe = Array.isArray(arr) ? arr.slice(0, MAX_SLIPS) : [];
+      localStorage.setItem(SLIPS_KEY, JSON.stringify(safe));
+    }
+
+    function renderHistory(){
+      const slips = readSlips();
+      slipCountPill.textContent = String(slips.length);
+      histHint.textContent = slips.length
+        ? "Saved slips are stored on this device (LocalStorage)."
+        : "No saved slips yet. Compute PAYE, then click Save Slip.";
+
+      historyList.innerHTML = "";
+
+      if (!slips.length){
+        const empty = document.createElement("div");
+        empty.className = "histRow";
+        empty.innerHTML = `<div class="histMeta"><div class="histTitle">No slips saved</div><div class="histSub">Your saved slips will appear here.</div></div>`;
+        historyList.appendChild(empty);
+        return;
+      }
+
+      // newest first
+      const sorted = slips.slice().sort((a,b)=> String(b.createdAt).localeCompare(String(a.createdAt)));
+
+      for (const s of sorted){
+        const row = document.createElement("div");
+        row.className = "histRow";
+
+        const title = (s.userLabel && s.userLabel.trim())
+          ? s.userLabel.trim()
+          : `${s.reportingPeriodLabel || "Period"} Slip`;
+
+        const sub = `${humanTS(s.createdAt)} • ${s.reportingPeriodLabel || ""} • ${s.mode || ""} • PAYE ${formatN(s.payePeriod)} • Net ${formatN(s.netPeriod)}`;
+
+        const left = document.createElement("div");
+        left.className = "histMeta";
+        left.innerHTML = `<div class="histTitle">${esc(title)}</div><div class="histSub">${esc(sub)}</div>`;
+
+        const btns = document.createElement("div");
+        btns.className = "histBtns";
+
+        const bView = document.createElement("button");
+        bView.className = "secondary small";
+        bView.textContent = "View/Print";
+        bView.addEventListener("click", ()=>{
+          const html = buildSlipHTML(s);
+          openPrintWindow(html);
+        });
+
+        const bDel = document.createElement("button");
+        bDel.className = "secondary small";
+        bDel.textContent = "Delete";
+        bDel.addEventListener("click", ()=>{
+          const kept = readSlips().filter(x => x.id !== s.id);
+          writeSlips(kept);
+          renderHistory();
+          rawOut.textContent = JSON.stringify({ deleted:true, id:s.id }, null, 2);
+        });
+
+        btns.appendChild(bView);
+        btns.appendChild(bDel);
+
+        row.appendChild(left);
+        row.appendChild(btns);
+        historyList.appendChild(row);
+      }
+    }
+
+    function saveSlip(){
+      const label = prompt("Optional label for this slip (e.g., Jan 2026 PAYE):", "");
+      const slip = currentSlipObject(label || "");
+      if (!slip){
+        setStatus("Compute first", "bad");
+        rawOut.textContent = JSON.stringify({ error: "Compute PAYE before saving a slip." }, null, 2);
+        return;
+      }
+
+      const existing = readSlips();
+
+      // keep newest at top; de-dupe by same timestamp+period+gross+paye
+      const signature = `${slip.createdAt}|${slip.reportingPeriod}|${Math.round(slip.grossPeriod)}|${Math.round(slip.payePeriod)}`;
+      const kept = existing.filter(x => {
+        const sig2 = `${x.createdAt}|${x.reportingPeriod}|${Math.round(x.grossPeriod||0)}|${Math.round(x.payePeriod||0)}`;
+        return sig2 !== signature;
+      });
+
+      const next = [slip, ...kept].slice(0, MAX_SLIPS);
+      writeSlips(next);
+
+      renderHistory();
+      setStatus("Slip saved", "ok");
+      rawOut.textContent = JSON.stringify({ slipSaved:true, id: slip.id, label: slip.userLabel || null, at: slip.createdAt }, null, 2);
+    }
+
+    function clearAllSlips(){
+      const ok = confirm("Clear all saved slips on this device?");
+      if (!ok) return;
+      localStorage.removeItem(SLIPS_KEY);
+      renderHistory();
+      rawOut.textContent = JSON.stringify({ slipsCleared:true }, null, 2);
+      setStatus("Cleared slips", "ok");
+    }
+
+    // ---------- Copy/Export ----------
     function buildSummaryText(){
       if (!lastResult) return "No result computed yet.";
 
@@ -1150,7 +1524,7 @@ Author | Financial Strategy</div>
       try{
         await navigator.clipboard.writeText(txt);
         copyHint.textContent = "Summary copied to clipboard.";
-      } catch(e){
+      } catch {
         copyHint.textContent = "Copy failed (browser blocked clipboard).";
       }
     }
@@ -1178,168 +1552,7 @@ Author | Financial Strategy</div>
       copyHint.textContent = "JSON downloaded.";
     }
 
-    // -------- Print Slip ----------
-    function esc(s){
-      return String(s ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-
-    function formatN(n){
-      return "₦ " + formatMoney(Math.round(Number(n||0)));
-    }
-
-    function printSlip(){
-      if (!lastResult){
-        setStatus("Compute first", "bad");
-        rawOut.textContent = JSON.stringify({ error: "Please compute PAYE before printing." }, null, 2);
-        return;
-      }
-
-      const d = computeDerived(lastResult);
-      const label = periodLabel();
-      const mode = isAdvancedMode() ? "Advanced deductions" : "Simple deductions";
-
-      const basePay = parseMoney(basePayEl.value);
-      const baseFreq = baseFreqEl.value;
-
-      const bal = d.balance;
-      const absBal = Math.abs(bal);
-
-      let reconTitle = "Settled";
-      if (absBal >= 0.5) reconTitle = bal > 0 ? "Balance Payable" : "Overpaid (Refund)";
-
-      const slipHtml = `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TaxIQ — Tax Summary Slip</title>
-  <style>
-    :root{ --ink:#0b1020; --muted:#51607a; --line:#d9e0ea; }
-    *{box-sizing:border-box}
-    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif; color:var(--ink); background:#fff; }
-    .page{ max-width:820px; margin:28px auto; padding:0 18px 40px; }
-    .hdr{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; padding:14px 0 10px; border-bottom:2px solid var(--line); }
-    .brand h1{ margin:0; font-size:20px; letter-spacing:.2px; }
-    .brand .sub{ margin-top:6px; color:var(--muted); font-size:12px; line-height:1.3; }
-    .meta{ text-align:right; font-size:12px; color:var(--muted); line-height:1.4; white-space:pre-line; }
-    .boxgrid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
-    @media print { .page{ margin:0; max-width:100%; } }
-    @media(max-width:640px){ .boxgrid{ grid-template-columns:1fr; } .meta{text-align:left} }
-    .box{ border:1px solid var(--line); border-radius:12px; padding:12px; }
-    .box .t{ font-size:12px; color:var(--muted); }
-    .box .v{ margin-top:6px; font-size:18px; font-weight:900; }
-    .row{ margin-top:14px; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
-    table{ width:100%; border-collapse:collapse; }
-    th,td{ padding:10px 12px; border-bottom:1px solid var(--line); font-size:12px; text-align:left; }
-    th{ background:#f6f8fb; color:#22304a; }
-    tr:last-child td{ border-bottom:none; }
-    .foot{ margin-top:14px; color:var(--muted); font-size:11px; line-height:1.35; }
-    .btns{ margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; }
-    .btn{ border:1px solid var(--line); padding:10px 12px; border-radius:10px; background:#f6f8fb; cursor:pointer; font-weight:800; }
-    @media print { .btns{ display:none; } }
-    .tag{ display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid var(--line); font-size:11px; color:#22304a; background:#f6f8fb; }
-  </style>
-</head>
-<body>
-  <div class="page">
-    <div class="hdr">
-      <div class="brand">
-        <h1>TaxIQ — Tax Summary Slip</h1>
-        <div class="sub">
-          PAYE (Nigeria) • Reporting Period Summary<br/>
-          This slip is an informational summary based on provided inputs.
-        </div>
-      </div>
-      <div class="meta">${esc("Generated: " + humanTS())}
-${esc("Reporting Period: " + label)}
-${esc("Mode: " + mode)}</div>
-    </div>
-
-    <div class="boxgrid">
-      <div class="box">
-        <div class="t">Base Pay</div>
-        <div class="v">${esc(formatN(basePay))}</div>
-        <div class="t" style="margin-top:6px">Frequency: ${esc(baseFreq)}</div>
-      </div>
-
-      <div class="box">
-        <div class="t">Reconciliation Status</div>
-        <div class="v">${esc(reconTitle)}</div>
-        <div class="t" style="margin-top:6px">Tax Withheld (${esc(label)}): ${esc(formatN(d.withheld))}</div>
-      </div>
-    </div>
-
-    <div class="boxgrid">
-      <div class="box">
-        <div class="t">Gross (${esc(label)})</div>
-        <div class="v">${esc(formatN(d.grossPeriod))}</div>
-      </div>
-      <div class="box">
-        <div class="t">PAYE Liability (${esc(label)})</div>
-        <div class="v">${esc(formatN(d.payePeriod))}</div>
-      </div>
-      <div class="box">
-        <div class="t">Net (${esc(label)})</div>
-        <div class="v">${esc(formatN(d.netPeriod))}</div>
-      </div>
-      <div class="box">
-        <div class="t">Balance Payable / (Refund)</div>
-        <div class="v">${esc(formatN(absBal))}</div>
-        <div class="t" style="margin-top:6px">${esc(reconTitle)}</div>
-      </div>
-    </div>
-
-    <div class="row">
-      <table>
-        <thead>
-          <tr>
-            <th colspan="2">Annual Reference (Audit)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td>Annual Gross</td><td>${esc(formatN(d.grossAnnual))}</td></tr>
-          <tr><td>Annual PAYE</td><td>${esc(formatN(d.payeAnnual))}</td></tr>
-          <tr><td>Annual Income (after deductions)</td><td>${esc(formatN(d.annualIncome))}</td></tr>
-          <tr><td>Relief Applied</td><td>${esc(formatN(d.relief))}</td></tr>
-          <tr><td>Taxable Income</td><td>${esc(formatN(d.taxableIncome))}</td></tr>
-          <tr><td>Effective Tax Rate (Annual)</td><td>${esc((d.effRate*100).toFixed(2) + "%")}</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="foot">
-      <span class="tag">TaxIQ</span>
-      <div style="margin-top:8px">
-        Notes: Period figures are derived by scaling annual values to the selected reporting period. If your actual earnings exist only for part of a year (e.g., employment started mid-year), a pro-rated tax computation mode may be required.
-      </div>
-    </div>
-
-    <div class="btns">
-      <button class="btn" onclick="window.print()">Print / Save as PDF</button>
-      <button class="btn" onclick="window.close()">Close</button>
-    </div>
-  </div>
-</body>
-</html>`;
-
-      const w = window.open("", "_blank");
-      if (!w){
-        setStatus("Popup blocked", "bad");
-        rawOut.textContent = JSON.stringify({ error: "Popup blocked by browser. Please allow popups for this site." }, null, 2);
-        return;
-      }
-      w.document.open();
-      w.document.write(slipHtml);
-      w.document.close();
-      w.focus();
-    }
-
-    // -------- Persistence (Save/Load) ----------
+    // -------- Persistence (Session Save/Load) ----------
     function hasSaved(){ return !!localStorage.getItem(STORAGE_KEY); }
 
     function refreshSaveHint(){
@@ -1361,7 +1574,7 @@ ${esc("Mode: " + mode)}</div>
       const deductionRows = Array.from(dedBody.querySelectorAll("tr")).map(tr => tr._get());
 
       return {
-        meta: { version:"v0.3.1", savedAt: nowISO() },
+        meta: { version:"v0.3.3", savedAt: nowISO() },
         base: { pay: parseMoney(basePayEl.value), freq: baseFreqEl.value },
         mode: { deductions: isAdvancedMode() ? "advanced" : "simple", advOpen: !!advDeds.open },
         allowances: allowanceRows,
@@ -1458,13 +1671,7 @@ ${esc("Mode: " + mode)}</div>
       setStatus("Cleared", "ok");
     }
 
-    // ---------- Core compute ----------
-    function renderOrClear(){
-      if (!lastResult) { clearOutputCards(); return; }
-      renderPeriodAndRecon();
-    }
-
-    // ---------- Event wiring ----------
+    // ---------- Events ----------
     attachMoneyFormatting(basePayEl);
     attachMoneyFormatting(monthlyDedsEl);
     attachMoneyFormatting(pensionPctEl);
@@ -1502,18 +1709,11 @@ ${esc("Mode: " + mode)}</div>
       renderPeriodAndRecon();
     });
 
-    btnCopy.addEventListener("click", async ()=>{
-      const txt = buildSummaryText();
-      try{
-        await navigator.clipboard.writeText(txt);
-        copyHint.textContent = "Summary copied to clipboard.";
-      } catch{
-        copyHint.textContent = "Copy failed (browser blocked clipboard).";
-      }
-    });
-
+    btnCopy.addEventListener("click", ()=>copySummary());
     btnDownload.addEventListener("click", ()=>downloadJSON());
-    btnPrint.addEventListener("click", ()=>printSlip());
+    btnPrint.addEventListener("click", ()=>printCurrentSlip());
+    btnSaveSlip.addEventListener("click", ()=>saveSlip());
+    btnClearSlips.addEventListener("click", ()=>clearAllSlips());
 
     btnSave.addEventListener("click", ()=>{
       try{ saveSession(); } catch(e){
@@ -1591,10 +1791,10 @@ ${esc("Mode: " + mode)}</div>
       recalcDeductionTotals();
       applyModeUI();
       updateAnnualDeds();
-      renderOrClear();
+      renderPeriodAndRecon();
     });
 
-    // ---- INIT ----
+    // Init
     seedAllowanceRows();
     seedDeductionRows();
     setStatus("Ready");
@@ -1604,13 +1804,16 @@ ${esc("Mode: " + mode)}</div>
     updateAnnualDeds();
     clearOutputCards();
     refreshSaveHint();
+    renderHistory();
 
-    // Auto-load if saved exists and basePay empty
+    // Auto-load session if saved exists and basePay empty
     try{
       if (!basePayEl.value && hasSaved()){
         loadSession();
       }
     } catch { /* ignore */ }
+
+    function hasSaved(){ return !!localStorage.getItem(STORAGE_KEY); }
   </script>
 </body>
 </html>
