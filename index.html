@@ -169,6 +169,17 @@
       margin-top:10px;
       padding-top:10px;
       border-top:1px solid var(--line);
+      align-items:center;
+    }
+
+    .periodbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:10px;
+      padding-top:10px;
+      border-top:1px solid var(--line);
     }
   </style>
 </head>
@@ -180,7 +191,7 @@
         <h1>TaxIQ — Tax Calculator</h1>
         <div class="sub">
           PAYE module: annualized earnings profile = base pay + taxable allowances − annualized deductions.<br/>
-          Output focus: tax liability for the reporting period + net take-home indicators.
+          Output focus: tax liability for a selected reporting period (Monthly / Quarterly / Annual).
         </div>
       </div>
       <div class="sig">Robert Asibor
@@ -342,26 +353,42 @@ Author | Financial Strategy</div>
       <div class="card">
         <h2>Results <span class="pill" id="statusPill">Ready</span></h2>
 
+        <div class="periodbar">
+          <div class="field" style="flex:1 1 240px; margin:0;">
+            <label>Reporting Period</label>
+            <select id="reportPeriod">
+              <option value="monthly" selected>Monthly</option>
+              <option value="quarterly">Quarterly</option>
+              <option value="annual">Annual</option>
+            </select>
+            <div class="hint">Tax is computed annually and scaled for the selected period.</div>
+          </div>
+          <span class="tiny" id="periodHint">—</span>
+        </div>
+
         <div class="kpis">
           <div class="kpi">
             <div class="t">Annualized Gross (Base + Taxable Allowances)</div>
             <div class="v" id="kpiGross">—</div>
             <div class="s" id="kpiGrossBreak">—</div>
           </div>
+
           <div class="kpi">
             <div class="t">PAYE (Annual)</div>
             <div class="v" id="kpiPayeAnnual">—</div>
             <div class="s" id="kpiPayeMonthly">—</div>
           </div>
+
           <div class="kpi">
-            <div class="t">Net Pay (Annual)</div>
-            <div class="v" id="kpiNetAnnual">—</div>
-            <div class="s" id="kpiNetAnnualSub">—</div>
+            <div class="t">PAYE for Reporting Period</div>
+            <div class="v" id="kpiPayePeriod">—</div>
+            <div class="s" id="kpiPayePeriodSub">—</div>
           </div>
+
           <div class="kpi">
-            <div class="t">Net Pay (Monthly)</div>
-            <div class="v" id="kpiNetMonthly">—</div>
-            <div class="s" id="kpiNetMonthlySub">—</div>
+            <div class="t">Net for Reporting Period</div>
+            <div class="v" id="kpiNetPeriod">—</div>
+            <div class="s" id="kpiNetPeriodSub">—</div>
           </div>
         </div>
 
@@ -371,7 +398,7 @@ Author | Financial Strategy</div>
             <div class="kpi">
               <div class="t">Annual Income (after deductions)</div>
               <div class="v" id="kpiAnnualIncome">—</div>
-              <div class="s" id="kpiAnnualIncomeSub">Gross − Deductions</div>
+              <div class="s">Gross − Deductions</div>
             </div>
             <div class="kpi">
               <div class="t">Relief Applied</div>
@@ -384,7 +411,7 @@ Author | Financial Strategy</div>
               <div class="s">Annual income − relief</div>
             </div>
             <div class="kpi">
-              <div class="t">Effective Tax Rate</div>
+              <div class="t">Effective Tax Rate (Annual)</div>
               <div class="v" id="kpiEffRate">—</div>
               <div class="s">PAYE ÷ Gross</div>
             </div>
@@ -436,18 +463,20 @@ Author | Financial Strategy</div>
     const btnReset = document.getElementById("btnReset");
     const statusPill = document.getElementById("statusPill");
 
+    const reportPeriodEl = document.getElementById("reportPeriod");
+    const periodHint = document.getElementById("periodHint");
+
     const kpiGross = document.getElementById("kpiGross");
     const kpiGrossBreak = document.getElementById("kpiGrossBreak");
     const kpiPayeAnnual = document.getElementById("kpiPayeAnnual");
     const kpiPayeMonthly = document.getElementById("kpiPayeMonthly");
 
-    const kpiNetAnnual = document.getElementById("kpiNetAnnual");
-    const kpiNetAnnualSub = document.getElementById("kpiNetAnnualSub");
-    const kpiNetMonthly = document.getElementById("kpiNetMonthly");
-    const kpiNetMonthlySub = document.getElementById("kpiNetMonthlySub");
+    const kpiPayePeriod = document.getElementById("kpiPayePeriod");
+    const kpiPayePeriodSub = document.getElementById("kpiPayePeriodSub");
+    const kpiNetPeriod = document.getElementById("kpiNetPeriod");
+    const kpiNetPeriodSub = document.getElementById("kpiNetPeriodSub");
 
     const kpiAnnualIncome = document.getElementById("kpiAnnualIncome");
-    const kpiAnnualIncomeSub = document.getElementById("kpiAnnualIncomeSub");
     const kpiRelief = document.getElementById("kpiRelief");
     const kpiTaxableIncome = document.getElementById("kpiTaxableIncome");
     const kpiEffRate = document.getElementById("kpiEffRate");
@@ -777,25 +806,62 @@ Author | Financial Strategy</div>
       return null;
     }
 
-    function computeDerivedKPIs(result){
-      const gross = Number(result?.breakdown?.baseAnnual || 0) + Number(result?.breakdown?.allowancesAnnual || 0);
-      const paye = extractNum(result, ["paye","tax","taxPayable","annualTax"]) ?? 0;
+    function getPeriodFactor(){
+      const p = reportPeriodEl.value;
+      if (p === "quarterly") return 1/4;
+      if (p === "annual") return 1;
+      return 1/12; // monthly default
+    }
+
+    function periodLabel(){
+      const p = reportPeriodEl.value;
+      if (p === "quarterly") return "Quarter";
+      if (p === "annual") return "Year";
+      return "Month";
+    }
+
+    function computeDerived(result){
+      const grossAnnual = Number(result?.breakdown?.baseAnnual || 0) + Number(result?.breakdown?.allowancesAnnual || 0);
+      const payeAnnual = extractNum(result, ["paye","tax","taxPayable","annualTax"]) ?? 0;
 
       const annualIncome = Number(result?.annualIncome ?? result?.breakdown?.annualIncome ?? 0);
       const relief = Number(result?.relief ?? 0);
       const taxableIncome = Number(result?.taxableIncome ?? 0);
 
-      const netAnnual = Math.max(0, gross - paye);
-      const netMonthly = netAnnual / 12;
+      const effRate = grossAnnual > 0 ? (payeAnnual / grossAnnual) : 0;
 
-      const effRate = gross > 0 ? (paye / gross) : 0;
+      const factor = getPeriodFactor();
+      const grossPeriod = grossAnnual * factor;
+      const payePeriod = payeAnnual * factor;
+      const netPeriod = Math.max(0, grossPeriod - payePeriod);
 
-      return { gross, paye, netAnnual, netMonthly, annualIncome, relief, taxableIncome, effRate };
+      return { grossAnnual, payeAnnual, annualIncome, relief, taxableIncome, effRate, factor, grossPeriod, payePeriod, netPeriod };
+    }
+
+    function renderPeriodKPIs(){
+      if (!lastResult){
+        kpiPayePeriod.textContent = "—";
+        kpiPayePeriodSub.textContent = "—";
+        kpiNetPeriod.textContent = "—";
+        kpiNetPeriodSub.textContent = "—";
+        periodHint.textContent = "Select Monthly / Quarterly / Annual to view period liability.";
+        return;
+      }
+
+      const d = computeDerived(lastResult);
+      const label = periodLabel();
+
+      kpiPayePeriod.textContent = "₦ " + formatMoney(Math.round(d.payePeriod));
+      kpiPayePeriodSub.textContent = `Annual PAYE ₦${formatMoney(Math.round(d.payeAnnual))} scaled to ${label.toLowerCase()}`;
+
+      kpiNetPeriod.textContent = "₦ " + formatMoney(Math.round(d.netPeriod));
+      kpiNetPeriodSub.textContent = `${label} gross ₦${formatMoney(Math.round(d.grossPeriod))} − ${label} PAYE ₦${formatMoney(Math.round(d.payePeriod))}`;
+
+      periodHint.textContent = `Currently showing: ${label} liability (annual values are still shown for reference).`;
     }
 
     function render(result){
       lastResult = result;
-
       rawOut.textContent = JSON.stringify(result, null, 2);
 
       const b = result?.breakdown;
@@ -818,23 +884,16 @@ Author | Financial Strategy</div>
         kpiPayeMonthly.textContent = "—";
       }
 
-      // Derived net + transparency
-      const d = computeDerivedKPIs(result);
-
-      kpiNetAnnual.textContent = "₦ " + formatMoney(Math.round(d.netAnnual));
-      kpiNetAnnualSub.textContent = `Gross ₦${formatMoney(Math.round(d.gross))} − PAYE ₦${formatMoney(Math.round(d.paye))}`;
-
-      kpiNetMonthly.textContent = "₦ " + formatMoney(Math.round(d.netMonthly));
-      kpiNetMonthlySub.textContent = `Net annual ÷ 12`;
+      const d = computeDerived(result);
 
       kpiAnnualIncome.textContent = d.annualIncome ? ("₦ " + formatMoney(Math.round(d.annualIncome))) : "—";
-      kpiAnnualIncomeSub.textContent = "Gross − Deductions";
-
-      kpiRelief.textContent = ("₦ " + formatMoney(Math.round(d.relief || 0)));
+      kpiRelief.textContent = "₦ " + formatMoney(Math.round(d.relief || 0));
       kpiTaxableIncome.textContent = d.taxableIncome ? ("₦ " + formatMoney(Math.round(d.taxableIncome))) : "—";
 
       const pct = (d.effRate * 100);
       kpiEffRate.textContent = (Number.isFinite(pct) ? pct.toFixed(2) : "0.00") + "%";
+
+      renderPeriodKPIs();
     }
 
     function validate(){
@@ -898,7 +957,9 @@ Author | Financial Strategy</div>
 
     function buildSummaryText(){
       if (!lastResult) return "No result computed yet.";
-      const d = computeDerivedKPIs(lastResult);
+
+      const d = computeDerived(lastResult);
+      const label = periodLabel();
 
       const mode = isAdvancedMode() ? "Advanced deductions" : "Simple deductions";
       const basePay = parseMoney(basePayEl.value);
@@ -907,18 +968,18 @@ Author | Financial Strategy</div>
       return [
         "TaxIQ — PAYE Summary (Nigeria)",
         "--------------------------------",
+        `Reporting Period: ${label}`,
         `Mode: ${mode}`,
         `Base Pay: ₦${formatMoney(basePay)} (${baseFreq})`,
-        `Gross Annual (Base + Taxable Allowances): ₦${formatMoney(Math.round(d.gross))}`,
-        `Deductions Annualized: ₦${formatMoney(Math.round(lastResult?.breakdown?.deductionsAnnual || 0))}`,
+        `Gross Annual (Base + Taxable Allowances): ₦${formatMoney(Math.round(d.grossAnnual))}`,
+        `PAYE Annual: ₦${formatMoney(Math.round(d.payeAnnual))}`,
+        `PAYE per ${label}: ₦${formatMoney(Math.round(d.payePeriod))}`,
+        `Net per ${label}: ₦${formatMoney(Math.round(d.netPeriod))}`,
+        "",
         `Annual Income (after deductions): ₦${formatMoney(Math.round(d.annualIncome || 0))}`,
         `Relief Applied: ₦${formatMoney(Math.round(d.relief || 0))}`,
         `Taxable Income: ₦${formatMoney(Math.round(d.taxableIncome || 0))}`,
-        `PAYE Annual: ₦${formatMoney(Math.round(d.paye))}`,
-        `PAYE Monthly (approx): ₦${formatMoney(Math.round(d.paye/12))}`,
-        `Net Annual (Gross − PAYE): ₦${formatMoney(Math.round(d.netAnnual))}`,
-        `Net Monthly (approx): ₦${formatMoney(Math.round(d.netMonthly))}`,
-        `Effective Tax Rate: ${(d.effRate*100).toFixed(2)}%`,
+        `Effective Tax Rate (Annual): ${(d.effRate*100).toFixed(2)}%`,
         "",
         "Generated by TaxIQ."
       ].join("\n");
@@ -937,6 +998,7 @@ Author | Financial Strategy</div>
     function downloadJSON(){
       const exportObj = {
         meta: { app:"TaxIQ", module:"PAYE", exportedAt: new Date().toISOString() },
+        reportingPeriod: reportPeriodEl.value,
         input: lastPayload,
         result: lastResult
       };
@@ -970,6 +1032,10 @@ Author | Financial Strategy</div>
 
     advDeds.addEventListener("toggle", ()=>{
       if (isAdvancedMode() && !advDeds.open) advDeds.open = true;
+    });
+
+    reportPeriodEl.addEventListener("change", ()=>{
+      renderPeriodKPIs();
     });
 
     btnAddRow.addEventListener("click", ()=>{
@@ -1029,10 +1095,11 @@ Author | Financial Strategy</div>
       kpiPayeAnnual.textContent = "—";
       kpiPayeMonthly.textContent = "—";
 
-      kpiNetAnnual.textContent = "—";
-      kpiNetAnnualSub.textContent = "—";
-      kpiNetMonthly.textContent = "—";
-      kpiNetMonthlySub.textContent = "—";
+      kpiPayePeriod.textContent = "—";
+      kpiPayePeriodSub.textContent = "—";
+      kpiNetPeriod.textContent = "—";
+      kpiNetPeriodSub.textContent = "—";
+      periodHint.textContent = "Select Monthly / Quarterly / Annual to view period liability.";
 
       kpiAnnualIncome.textContent = "—";
       kpiRelief.textContent = "—";
@@ -1056,6 +1123,7 @@ Author | Financial Strategy</div>
     recalcDeductionTotals();
     applyModeUI();
     updateAnnualDeds();
+    renderPeriodKPIs();
   </script>
 </body>
 </html>
