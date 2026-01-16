@@ -26,7 +26,6 @@
     .sig{text-align:right;white-space:pre-line;color:var(--muted);font-size:13px;line-height:1.2}
     .grid{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-top:16px;}
     @media(max-width:980px){.grid{grid-template-columns:1fr}.sig{text-align:left}}
-
     .card{
       background:linear-gradient(180deg, rgba(255,255,255,.03), transparent 40%), var(--card);
       border:1px solid var(--line); border-radius:var(--radius); padding:16px;
@@ -47,7 +46,6 @@
     }
     input::placeholder{color:rgba(169,182,211,.6)}
     .hint{font-size:12px;color:rgba(169,182,211,.85);margin-top:4px}
-
     .btnbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
     button{
       padding:11px 14px;border-radius:14px;border:1px solid var(--line);
@@ -66,7 +64,6 @@
     .table th,.table td{padding:10px 10px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle;}
     .table th{color:#dbe6ff;text-align:left;background:rgba(255,255,255,.03)}
     .table tr:last-child td{border-bottom:none}
-
     .tiny{font-size:12px;color:var(--muted)}
     .pill{
       display:inline-flex;align-items:center;gap:8px;
@@ -88,21 +85,17 @@
     .kpi .v{margin-top:6px;font-size:18px;font-weight:900;color:#fff}
     .kpi .s{margin-top:4px;font-size:12px;color:rgba(169,182,211,.85)}
     .section{margin-top:14px}
-
     .money{width:28ch;min-width:28ch;font-variant-numeric: tabular-nums;}
-
     .exports{
       display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;
       padding-top:10px;border-top:1px solid var(--line);align-items:center;
     }
-
     .statusBadge{
       display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border-radius:999px;
       border:1px solid var(--line);background:rgba(255,255,255,.03);
       font-size:12px;color:var(--muted);margin-left:auto;
     }
     .statusBadge.ok{color:var(--ok)} .statusBadge.bad{color:var(--danger)}
-
     .toolbarline{
       display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px;
       padding-top:10px;border-top:1px solid var(--line);
@@ -113,7 +106,6 @@
       font-size:12px;color:var(--muted);user-select:none;
     }
     .toggle input{width:auto}
-
     .historyHeader{display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-top:10px;}
     .historyList{margin-top:10px;border:1px solid var(--line);border-radius:14px;overflow:hidden;}
     .histRow{
@@ -141,6 +133,14 @@
     .chip.active{color:#fff;border-color:rgba(255,255,255,.18)}
     .divider{height:1px;background:var(--line);margin:12px 0}
     .hide{display:none !important}
+
+    .warn{
+      border:1px solid rgba(255,107,107,.25);
+      background:rgba(255,107,107,.06);
+      padding:10px 12px;border-radius:14px;margin-top:10px;
+      color:rgba(232,238,252,.95);
+      font-size:12px;line-height:1.35
+    }
   </style>
 </head>
 
@@ -150,8 +150,8 @@
       <div>
         <h1>TaxIQ — Nigeria Tax Calculator</h1>
         <div class="sub">
-          v0.4.x expansion: VAT (standard/zero/exempt + input eligibility), WHT (schedule), CIT (MVP).<br/>
-          Note: CIT/WHT rates & rules are configurable and presented with assumptions; confirm against current FIRS guidance for filing.
+          v0.5.0: WHT rate matrix + printable WHT certificate export (row-level), plus period totals and reconciliation.<br/>
+          PAYE/VAT/CIT remain intact. Always validate filing-specific nuances with current FIRS guidance.
         </div>
       </div>
       <div class="sig">Robert Asibor
@@ -162,12 +162,12 @@ Author | Financial Strategy</div>
     <div class="card">
       <h2>Tax Module Selector <span class="pill" id="activeModulePill">PAYE</span></h2>
 
-      <div class="modulebar" id="modulebar">
+      <div class="modulebar">
         <label class="chip active" id="chipPaye"><input type="radio" name="taxModule" value="PAYE" checked /> PAYE</label>
         <label class="chip" id="chipVat"><input type="radio" name="taxModule" value="VAT" /> VAT</label>
         <label class="chip" id="chipWht"><input type="radio" name="taxModule" value="WHT" /> WHT</label>
         <label class="chip" id="chipCit"><input type="radio" name="taxModule" value="CIT" /> CIT</label>
-        <span class="tiny" id="moduleHint">All modules compute → print slip → save slip → history.</span>
+        <span class="tiny">Compute → Print Slip → Save Slip → History.</span>
       </div>
 
       <div class="divider"></div>
@@ -181,7 +181,7 @@ Author | Financial Strategy</div>
             <option value="business">Business (Sole Prop / Partnership)</option>
             <option value="company">Company</option>
           </select>
-          <div class="hint">Used for context and future module rules (CIT/TET/levies).</div>
+          <div class="hint">Context + future rule paths.</div>
         </div>
 
         <div class="field">
@@ -197,7 +197,7 @@ Author | Financial Strategy</div>
             <option value="quarterly">Quarterly</option>
             <option value="annual">Annual</option>
           </select>
-          <div class="hint">This period drives module calculations.</div>
+          <div class="hint">Used by PAYE/VAT/WHT. CIT is annual by design.</div>
         </div>
       </div>
     </div>
@@ -213,9 +213,7 @@ Author | Financial Strategy</div>
             <div class="field">
               <label>Base Pay Amount</label>
               <input id="basePay" class="money" type="text" inputmode="numeric" placeholder="e.g., 6,000,000" />
-              <div class="hint">Annual by default; switch to Monthly if needed.</div>
             </div>
-
             <div class="field">
               <label>Base Pay Frequency</label>
               <select id="baseFreq">
@@ -226,7 +224,7 @@ Author | Financial Strategy</div>
           </div>
 
           <div class="section">
-            <h2>Allowances (editable) <span class="pill">PAYE</span></h2>
+            <h2>Allowances <span class="pill">PAYE</span></h2>
             <table class="table">
               <thead>
                 <tr>
@@ -240,7 +238,6 @@ Author | Financial Strategy</div>
               </thead>
               <tbody id="allowBody"></tbody>
             </table>
-
             <div class="btnbar">
               <button class="secondary" id="btnAddRow">+ Add Allowance Row</button>
             </div>
@@ -268,7 +265,7 @@ Author | Financial Strategy</div>
           </div>
         </div>
 
-        <!-- VAT PANEL (Enhanced) -->
+        <!-- VAT PANEL (from v0.4.2 enhanced) -->
         <div id="panelVAT" class="hide">
           <div class="row">
             <div class="field">
@@ -277,9 +274,7 @@ Author | Financial Strategy</div>
                 <option value="0.075" selected>7.5%</option>
                 <option value="custom">Custom…</option>
               </select>
-              <div class="hint">Default 7.5%. If Custom, enter below.</div>
             </div>
-
             <div class="field">
               <label>Custom VAT Rate (%)</label>
               <input id="vatRateCustom" class="money" type="text" inputmode="numeric" placeholder="e.g., 7.5" />
@@ -292,17 +287,14 @@ Author | Financial Strategy</div>
               <div class="field">
                 <label>Standard-rated Sales</label>
                 <input id="vatSalesStd" class="money" type="text" inputmode="numeric" placeholder="e.g., 10,000,000" />
-                <div class="hint">Output VAT is computed on this base only.</div>
               </div>
               <div class="field">
                 <label>Zero-rated Sales</label>
                 <input id="vatSalesZero" class="money" type="text" inputmode="numeric" placeholder="e.g., 0" />
-                <div class="hint">No output VAT (still reported).</div>
               </div>
               <div class="field">
                 <label>Exempt Sales</label>
                 <input id="vatSalesExempt" class="money" type="text" inputmode="numeric" placeholder="e.g., 0" />
-                <div class="hint">No output VAT (excluded from VAT base).</div>
               </div>
             </div>
           </div>
@@ -311,14 +303,12 @@ Author | Financial Strategy</div>
             <h2>Purchases & Input VAT Eligibility <span class="pill">VAT</span></h2>
             <div class="row">
               <div class="field">
-                <label>Eligible VATable Purchases (Input VAT claimable base)</label>
+                <label>Eligible VATable Purchases (input base)</label>
                 <input id="vatPurchEligible" class="money" type="text" inputmode="numeric" placeholder="e.g., 3,000,000" />
-                <div class="hint">Input VAT computed on this base (if claiming allowed).</div>
               </div>
               <div class="field">
-                <label>Non-eligible Purchases (no input VAT claim)</label>
+                <label>Non-eligible Purchases</label>
                 <input id="vatPurchNonEligible" class="money" type="text" inputmode="numeric" placeholder="e.g., 0" />
-                <div class="hint">Tracked for disclosure only.</div>
               </div>
               <div class="field">
                 <label>Claim Input VAT?</label>
@@ -338,54 +328,88 @@ Author | Financial Strategy</div>
           </div>
         </div>
 
-        <!-- WHT PANEL (Working) -->
+        <!-- WHT PANEL (v0.5.0 upgrade) -->
         <div id="panelWHT" class="hide">
-          <div class="tiny">
-            WHT (MVP): choose transaction type per line, enter gross amount, optional rate override, compute withheld schedule totals.
+          <div class="warn">
+            WHT rates vary by transaction and recipient classification; this module uses a standard matrix and allows per-row override.
+            Use the override when you have a confirmed applicable rate.
           </div>
 
-          <table class="table">
-            <thead>
-              <tr>
-                <th style="width:32%">Transaction Type</th>
-                <th style="width:22%">Gross Amount</th>
-                <th style="width:18%">Rate (%)</th>
-                <th style="width:18%">WHT</th>
-                <th style="width:10%"></th>
-              </tr>
-            </thead>
-            <tbody id="whtBody"></tbody>
-          </table>
-
-          <div class="btnbar">
-            <button class="secondary" id="btnAddWht">+ Add WHT Row</button>
-          </div>
-
-          <div class="row">
-            <div class="field">
-              <label>WHT Already Remitted (for period)</label>
-              <input id="whtPaid" class="money" type="text" inputmode="numeric" placeholder="e.g., 100,000" />
+          <div class="section">
+            <h2>Certificate Parties <span class="pill">WHT</span></h2>
+            <div class="row">
+              <div class="field">
+                <label>Payer Name</label>
+                <input id="whtPayerName" type="text" placeholder="e.g., ABC Nigeria Ltd" />
+              </div>
+              <div class="field">
+                <label>Payer TIN (optional)</label>
+                <input id="whtPayerTin" type="text" placeholder="TIN" />
+              </div>
+            </div>
+            <div class="row">
+              <div class="field">
+                <label>Payee Name</label>
+                <input id="whtPayeeName" type="text" placeholder="e.g., John Doe / XYZ Services" />
+              </div>
+              <div class="field">
+                <label>Payee TIN (optional)</label>
+                <input id="whtPayeeTin" type="text" placeholder="TIN" />
+              </div>
             </div>
           </div>
 
-          <div class="tiny">
-            Assumption: rates are standard defaults and can be overridden per row. Confirm applicable rates by transaction/recipient type for filing.
+          <div class="section">
+            <h2>WHT Schedule <span class="pill">Matrix + Override</span></h2>
+
+            <table class="table">
+              <thead>
+                <tr>
+                  <th style="width:6%">Pick</th>
+                  <th style="width:18%">Recipient</th>
+                  <th style="width:26%">Transaction</th>
+                  <th style="width:16%">Gross</th>
+                  <th style="width:12%">Rate (%)</th>
+                  <th style="width:14%">WHT</th>
+                  <th style="width:8%"></th>
+                </tr>
+              </thead>
+              <tbody id="whtBody"></tbody>
+            </table>
+
+            <div class="btnbar">
+              <button class="secondary" id="btnAddWht">+ Add WHT Row</button>
+              <button class="secondary" id="btnWhtCert">Print WHT Certificate (selected row)</button>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label>WHT Already Remitted (for period)</label>
+                <input id="whtPaid" class="money" type="text" inputmode="numeric" placeholder="e.g., 100,000" />
+              </div>
+              <div class="field">
+                <label>Certificate Reference (optional)</label>
+                <input id="whtCertRef" type="text" placeholder="e.g., WHT/2026/01/0001" />
+              </div>
+            </div>
+
+            <div class="tiny">
+              Tip: Use “Pick” to select a row, then click “Print WHT Certificate”. The certificate prints a single transaction line.
+            </div>
           </div>
         </div>
 
-        <!-- CIT PANEL (Working MVP) -->
+        <!-- CIT PANEL (kept as v0.4.2 MVP) -->
         <div id="panelCIT" class="hide">
           <div class="tiny">
-            CIT (MVP) — computes assessable profit and applies turnover band rate (Small/Medium/Large). Includes optional Minimum Tax & TET (toggle).
+            CIT (MVP) — assessable profit, turnover band rate, optional minimum tax, optional TET.
           </div>
 
           <div class="row">
             <div class="field">
               <label>Annual Turnover (₦)</label>
               <input id="citTurnover" class="money" type="text" inputmode="numeric" placeholder="e.g., 150,000,000" />
-              <div class="hint">Used for band rate and minimum tax base.</div>
             </div>
-
             <div class="field">
               <label>Profit Before Tax (PBT) (₦)</label>
               <input id="citPbt" class="money" type="text" inputmode="numeric" placeholder="e.g., 40,000,000" />
@@ -394,7 +418,7 @@ Author | Financial Strategy</div>
 
           <div class="row">
             <div class="field">
-              <label>Add-backs (disallowable expenses) (₦)</label>
+              <label>Add-backs (disallowable) (₦)</label>
               <input id="citAddBacks" class="money" type="text" inputmode="numeric" placeholder="e.g., 2,000,000" />
             </div>
             <div class="field">
@@ -413,23 +437,21 @@ Author | Financial Strategy</div>
               <input id="citLossBf" class="money" type="text" inputmode="numeric" placeholder="e.g., 0" />
             </div>
             <div class="field">
-              <label>Apply Minimum Tax? (Simplified)</label>
+              <label>Apply Minimum Tax?</label>
               <select id="citMinTaxOn">
                 <option value="no" selected>No</option>
                 <option value="yes">Yes (min tax = % of turnover)</option>
               </select>
-              <div class="hint">Simplified minimum tax: min tax rate * turnover (override rate below).</div>
             </div>
             <div class="field">
               <label>Minimum Tax Rate (%)</label>
               <input id="citMinTaxRate" class="money" type="text" inputmode="numeric" value="0.5" />
-              <div class="hint">Default 0.5% (editable).</div>
             </div>
           </div>
 
           <div class="row">
             <div class="field">
-              <label>Apply TET? (Education Tax) (optional)</label>
+              <label>Apply TET?</label>
               <select id="citTetOn">
                 <option value="no" selected>No</option>
                 <option value="yes">Yes</option>
@@ -443,10 +465,6 @@ Author | Financial Strategy</div>
               <label>CIT Already Paid / Credits (₦)</label>
               <input id="citPaid" class="money" type="text" inputmode="numeric" placeholder="e.g., 5,000,000" />
             </div>
-          </div>
-
-          <div class="tiny">
-            Assumption (common): Small company turnover &lt; ₦25m → 0% CIT; Medium ₦25m–₦100m → 20%; Large &gt; ₦100m → 30%. You can override rates in the next build if needed.
           </div>
         </div>
 
@@ -526,11 +544,12 @@ Author | Financial Strategy</div>
   <script type="module">
     import { runPAYE } from "./src/modules/paye/paye.js";
 
-    const SESSION_KEY = "taxiq_session_v401";
-    const SLIPS_KEY = "taxiq_saved_slips_v3";
-    const MAX_SLIPS = 120;
+    // ===== Storage =====
+    const SESSION_KEY = "taxiq_session_v050";
+    const SLIPS_KEY = "taxiq_saved_slips_v050";
+    const MAX_SLIPS = 150;
 
-    // module chips
+    // ===== Module chips + panels =====
     const chipPaye = document.getElementById("chipPaye");
     const chipVat  = document.getElementById("chipVat");
     const chipWht  = document.getElementById("chipWht");
@@ -544,12 +563,12 @@ Author | Financial Strategy</div>
     const panelWHT  = document.getElementById("panelWHT");
     const panelCIT  = document.getElementById("panelCIT");
 
-    // shared header
+    // ===== Shared header =====
     const taxpayerTypeEl = document.getElementById("taxpayerType");
     const taxStateEl = document.getElementById("taxState");
     const globalPeriodEl = document.getElementById("globalPeriod");
 
-    // PAYE
+    // ===== PAYE =====
     const basePayEl = document.getElementById("basePay");
     const baseFreqEl = document.getElementById("baseFreq");
     const allowBody = document.getElementById("allowBody");
@@ -558,7 +577,7 @@ Author | Financial Strategy</div>
     const annualDedsEl = document.getElementById("annualDeds");
     const payeWithheldEl = document.getElementById("payeWithheld");
 
-    // VAT enhanced
+    // ===== VAT =====
     const vatRateEl = document.getElementById("vatRate");
     const vatRateCustomEl = document.getElementById("vatRateCustom");
     const vatSalesStdEl = document.getElementById("vatSalesStd");
@@ -569,12 +588,19 @@ Author | Financial Strategy</div>
     const vatClaimInputEl = document.getElementById("vatClaimInput");
     const vatPaidEl = document.getElementById("vatPaid");
 
-    // WHT
+    // ===== WHT =====
+    const whtPayerNameEl = document.getElementById("whtPayerName");
+    const whtPayerTinEl  = document.getElementById("whtPayerTin");
+    const whtPayeeNameEl = document.getElementById("whtPayeeName");
+    const whtPayeeTinEl  = document.getElementById("whtPayeeTin");
+    const whtCertRefEl   = document.getElementById("whtCertRef");
+
     const whtBody = document.getElementById("whtBody");
     const btnAddWht = document.getElementById("btnAddWht");
+    const btnWhtCert = document.getElementById("btnWhtCert");
     const whtPaidEl = document.getElementById("whtPaid");
 
-    // CIT
+    // ===== CIT =====
     const citTurnoverEl = document.getElementById("citTurnover");
     const citPbtEl = document.getElementById("citPbt");
     const citAddBacksEl = document.getElementById("citAddBacks");
@@ -587,7 +613,7 @@ Author | Financial Strategy</div>
     const citTetRateEl = document.getElementById("citTetRate");
     const citPaidEl = document.getElementById("citPaid");
 
-    // outputs
+    // ===== Outputs =====
     const statusPill = document.getElementById("statusPill");
     const reconBadge = document.getElementById("reconBadge");
 
@@ -607,7 +633,6 @@ Author | Financial Strategy</div>
     const kpi4Val   = document.getElementById("kpi4Val");
     const kpi4Sub   = document.getElementById("kpi4Sub");
 
-    // actions
     const btnCompute = document.getElementById("btnCompute");
     const btnReset = document.getElementById("btnReset");
 
@@ -620,25 +645,26 @@ Author | Financial Strategy</div>
     const copyHint = document.getElementById("copyHint");
     const rawOut = document.getElementById("rawOut");
 
-    // session
+    // ===== Session buttons =====
     const btnSaveSession = document.getElementById("btnSaveSession");
     const btnLoadSession = document.getElementById("btnLoadSession");
     const btnClearSession = document.getElementById("btnClearSession");
     const autoSaveEl = document.getElementById("autoSave");
     const saveHint = document.getElementById("saveHint");
 
-    // history
+    // ===== Slip history =====
     const historyList = document.getElementById("historyList");
     const slipCountPill = document.getElementById("slipCountPill");
     const histHint = document.getElementById("histHint");
 
     const FREQ = ["monthly","quarterly","annual","one-off"];
-
     let activeModule = "PAYE";
     let lastReturn = null;
     let lastInputs = null;
 
-    // ---------- utilities ----------
+    // =========================
+    // Utilities
+    // =========================
     function nowISO(){ try { return new Date().toISOString(); } catch { return ""; } }
     function humanTS(iso){ try{ const d = iso ? new Date(iso) : new Date(); return d.toLocaleString(); } catch { return ""; } }
 
@@ -701,13 +727,10 @@ Author | Financial Strategy</div>
       }
       const b = Number(ret.balancePayableOrRefund || 0);
       const abs = Math.abs(b);
-
       if (abs < 0.5){
         reconBadge.textContent = "Reconciliation: Settled";
         reconBadge.classList.add("ok"); reconBadge.classList.remove("bad");
-        return;
-      }
-      if (b > 0){
+      } else if (b > 0){
         reconBadge.textContent = "Reconciliation: Balance Payable";
         reconBadge.classList.add("bad"); reconBadge.classList.remove("ok");
       } else {
@@ -720,14 +743,13 @@ Author | Financial Strategy</div>
       const module = ret?.meta?.module || "—";
       const label = ret?.meta?.periodLabel || periodLabel();
 
-      // generic 4 KPIs: Base, Tax Due, Credits, Balance
       kpi1Title.textContent = (module === "VAT") ? `VATable Sales Base (${label})` :
-                              (module === "WHT") ? `WHT Base (${label})` :
+                              (module === "WHT") ? `WHT Gross Base (${label})` :
                               (module === "CIT") ? `Assessable Profit (Annual)` :
                               `Gross Base (${label})`;
       kpi1Val.textContent = formatN(ret.grossBase);
       kpi1Sub.textContent = (module === "VAT") ? "Standard-rated sales only" :
-                            (module === "WHT") ? "Sum of gross amounts" :
+                            (module === "WHT") ? "Sum of gross amounts in schedule" :
                             (module === "CIT") ? "PBT + add-backs − deductions − allowances − losses" :
                             "Period gross base";
 
@@ -738,7 +760,7 @@ Author | Financial Strategy</div>
       kpi2Val.textContent = formatN(ret.taxDue);
       kpi2Sub.textContent = (module === "VAT") ? "Output − Input (if claimed)" :
                             (module === "WHT") ? "Total withholding computed" :
-                            (module === "CIT") ? "CIT (band/min-tax) + TET (if on)" :
+                            (module === "CIT") ? "CIT + TET (if enabled)" :
                             "Computed liability";
 
       kpi3Title.textContent = (module === "VAT") ? `VAT Remitted (${label})` :
@@ -758,11 +780,21 @@ Author | Financial Strategy</div>
       rawOut.textContent = JSON.stringify(ret, null, 2);
     }
 
-    // ---------- module switching ----------
+    function headerSnapshot(){
+      return {
+        taxpayerType: taxpayerTypeEl.value,
+        state: taxStateEl.value || "",
+        period: globalPeriodEl.value
+      };
+    }
+
+    // =========================
+    // Module switching
+    // =========================
     function setModule(mod){
       activeModule = mod;
-      document.getElementById("activeModulePill").textContent = mod;
-      document.getElementById("inputsPill").textContent = mod;
+      activeModulePill.textContent = mod;
+      inputsPill.textContent = mod;
 
       for (const el of [chipPaye, chipVat, chipWht, chipCit]) el.classList.remove("active");
       if (mod === "PAYE") chipPaye.classList.add("active");
@@ -775,21 +807,20 @@ Author | Financial Strategy</div>
       panelWHT.classList.toggle("hide", mod !== "WHT");
       panelCIT.classList.toggle("hide", mod !== "CIT");
 
-      // outputs reset (avoid showing mismatched prior tax)
-      clearKPIs();
-      setReconBadge(null);
-      rawOut.textContent = "{}";
-      copyHint.textContent = "—";
+      // reset outputs on module switch to avoid misinterpretation
+      clearKPIs(); setReconBadge(null);
+      rawOut.textContent = "{}"; copyHint.textContent = "—";
       setStatus("Ready");
-      lastReturn = null;
-      lastInputs = null;
+      lastReturn = null; lastInputs = null;
     }
 
     document.querySelectorAll('input[name="taxModule"]').forEach(r=>{
       r.addEventListener("change", (e)=> setModule(e.target.value));
     });
 
-    // ---------- PAYE ----------
+    // =========================
+    // PAYE (kept)
+    // =========================
     function annualize(amount, frequency){
       const a = Number(amount || 0);
       if (!Number.isFinite(a)) return 0;
@@ -821,7 +852,7 @@ Author | Financial Strategy</div>
 
       const tdFreq = document.createElement("td");
       const sel = document.createElement("select");
-      for (const f of ["monthly","quarterly","annual","one-off"]){
+      for (const f of FREQ){
         const o = document.createElement("option");
         o.value = f;
         o.textContent = f === "one-off" ? "One-off" : f.charAt(0).toUpperCase() + f.slice(1);
@@ -866,12 +897,14 @@ Author | Financial Strategy</div>
       sel.addEventListener("change", recalc);
       chk.addEventListener("change", recalc);
       del.addEventListener("click", ()=> tr.remove());
+
       tr._get = ()=>({
         name: inName.value.trim() || "Other allowance",
         amount: parseMoney(inAmt.value),
         frequency: sel.value,
         taxable: chk.checked
       });
+
       recalc();
       return tr;
     }
@@ -888,16 +921,12 @@ Author | Financial Strategy</div>
       if (!basePay || basePay <= 0) throw new Error("PAYE: Base Pay must be greater than 0.");
 
       const baseFrequency = baseFreqEl.value;
-
       const allowances = Array.from(allowBody.querySelectorAll("tr")).map(r=>r._get())
         .filter(x => (x.amount > 0) || (x.name && x.name.trim()));
 
       const monthlyDed = parseMoney(monthlyDedsEl.value);
       annualDedsEl.value = monthlyDed ? formatMoney(monthlyDed * 12) : "";
-
-      const deductions = monthlyDed > 0
-        ? [{ name:"Total Monthly Deductions", amount: monthlyDed, frequency:"monthly" }]
-        : [];
+      const deductions = monthlyDed > 0 ? [{ name:"Total Monthly Deductions", amount: monthlyDed, frequency:"monthly" }] : [];
 
       const payload = { basePay, baseFrequency, allowances, deductions };
       const result = runPAYE(payload);
@@ -906,7 +935,7 @@ Author | Financial Strategy</div>
       const breakdown = result?.breakdown || {};
       const grossAnnual = Number(breakdown.baseAnnual || 0) + Number(breakdown.allowancesAnnual || 0);
 
-      const f = globalPeriodEl.value === "quarterly" ? 1/4 : (globalPeriodEl.value === "annual" ? 1 : 1/12);
+      const f = (globalPeriodEl.value === "quarterly") ? 1/4 : (globalPeriodEl.value === "annual" ? 1 : 1/12);
       const label = periodLabel();
 
       const payePeriod = payeAnnual * f;
@@ -916,14 +945,7 @@ Author | Financial Strategy</div>
       const balance = payePeriod - withheld;
 
       const taxReturn = {
-        meta: {
-          module: "PAYE",
-          generatedAt: nowISO(),
-          period: globalPeriodEl.value,
-          periodLabel: label,
-          taxpayerType: taxpayerTypeEl.value,
-          state: taxStateEl.value || ""
-        },
+        meta: { module:"PAYE", generatedAt: nowISO(), period: globalPeriodEl.value, periodLabel: label, ...headerSnapshot() },
         grossBase: grossPeriod,
         taxableBase: Number(result?.taxableIncome ?? 0),
         taxDue: payePeriod,
@@ -939,12 +961,13 @@ Author | Financial Strategy</div>
         ],
         raw: result
       };
-
-      const inputs = { module:"PAYE", payload, withheld, header: headerSnapshot() };
+      const inputs = { module:"PAYE", header: headerSnapshot(), payload, withheld };
       return { taxReturn, inputs };
     }
 
-    // ---------- VAT enhanced ----------
+    // =========================
+    // VAT (kept)
+    // =========================
     function getVatRate(){
       if (vatRateEl.value === "custom"){
         const pct = parseMoney(vatRateCustomEl.value);
@@ -960,31 +983,21 @@ Author | Financial Strategy</div>
       const std = parseMoney(vatSalesStdEl.value);
       const zero = parseMoney(vatSalesZeroEl.value);
       const exempt = parseMoney(vatSalesExemptEl.value);
-
       const eligPurch = parseMoney(vatPurchEligibleEl.value);
       const nonEligPurch = parseMoney(vatPurchNonEligibleEl.value);
-
       const claimInput = (vatClaimInputEl.value === "yes");
       const paid = parseMoney(vatPaidEl.value);
 
       const outputVat = std * rate;
       const inputVat = claimInput ? (eligPurch * rate) : 0;
-
-      const netVat = outputVat - inputVat; // may be negative
+      const netVat = outputVat - inputVat;
       const balance = netVat - paid;
 
       const label = periodLabel();
 
       const taxReturn = {
-        meta: {
-          module: "VAT",
-          generatedAt: nowISO(),
-          period: globalPeriodEl.value,
-          periodLabel: label,
-          taxpayerType: taxpayerTypeEl.value,
-          state: taxStateEl.value || ""
-        },
-        grossBase: std,             // VATable base for output VAT
+        meta: { module:"VAT", generatedAt: nowISO(), period: globalPeriodEl.value, periodLabel: label, ...headerSnapshot() },
+        grossBase: std,
         taxableBase: std,
         taxDue: netVat,
         creditsWithheld: paid,
@@ -995,51 +1008,95 @@ Author | Financial Strategy</div>
           { label: "Zero-rated Sales", value: zero },
           { label: "Exempt Sales", value: exempt },
           { label: "Output VAT", value: outputVat },
-          { label: "Eligible Purchases (Input base)", value: eligPurch },
+          { label: "Eligible Purchases (input base)", value: eligPurch },
           { label: "Non-eligible Purchases", value: nonEligPurch },
           { label: "Input VAT (claimed)", value: inputVat },
-          { label: "Net VAT (Output − Input)", value: netVat }
+          { label: "Net VAT", value: netVat }
         ],
         raw: { rate, std, zero, exempt, eligPurch, nonEligPurch, claimInput, outputVat, inputVat, netVat }
       };
-
-      const inputs = {
-        module:"VAT",
-        header: headerSnapshot(),
-        rate, std, zero, exempt, eligPurch, nonEligPurch, claimInput, paid
-      };
-
+      const inputs = { module:"VAT", header: headerSnapshot(), rate, std, zero, exempt, eligPurch, nonEligPurch, claimInput, paid };
       return { taxReturn, inputs };
     }
 
-    // ---------- WHT (working schedule) ----------
-    const WHT_DEFAULTS = [
-      { key:"rent", label:"Rent", ratePct:10 },
-      { key:"interest", label:"Interest", ratePct:10 },
-      { key:"dividends", label:"Dividends", ratePct:10 },
-      { key:"royalties", label:"Royalties", ratePct:10 },
-      { key:"consultancy", label:"Consultancy/Professional Fees", ratePct:10 },
-      { key:"contracts", label:"Contracts (general)", ratePct:5 },
-      { key:"commissions", label:"Commissions", ratePct:10 },
-      { key:"management", label:"Management Fees", ratePct:10 },
-      { key:"director", label:"Directors Fees", ratePct:10 },
-      { key:"other", label:"Other (custom)", ratePct:10 }
+    // =========================
+    // WHT v0.5.0 (rate matrix + certificate export)
+    // =========================
+    const RECIPIENTS = [
+      { key:"individual", label:"Individual" },
+      { key:"company", label:"Company" }
     ];
 
-    function makeWhtRow({ typeKey="rent", gross="", ratePct="" } = {}){
+    const WHT_TXN = [
+      { key:"rent", label:"Rent" },
+      { key:"interest", label:"Interest" },
+      { key:"dividend", label:"Dividends" },
+      { key:"royalty", label:"Royalties" },
+      { key:"consulting", label:"Consultancy/Professional" },
+      { key:"management", label:"Management Fees" },
+      { key:"contract", label:"Contract/Supply" },
+      { key:"commission", label:"Commission" },
+      { key:"director", label:"Directors Fees" },
+      { key:"technical", label:"Technical Services" },
+      { key:"other", label:"Other (manual)" }
+    ];
+
+    // Rate matrix (editable later). Values are percentages.
+    // Note: This is a practical default matrix; users can override per row.
+    const WHT_RATE = {
+      individual: {
+        rent: 10, interest: 10, dividend: 10, royalty: 10,
+        consulting: 5, management: 5, contract: 5, commission: 5,
+        director: 10, technical: 5, other: 10
+      },
+      company: {
+        rent: 10, interest: 10, dividend: 10, royalty: 10,
+        consulting: 10, management: 10, contract: 5, commission: 10,
+        director: 10, technical: 10, other: 10
+      }
+    };
+
+    function defaultWhtRate(recipientKey, txnKey){
+      const r = WHT_RATE?.[recipientKey]?.[txnKey];
+      return (typeof r === "number" && r >= 0) ? r : 10;
+    }
+
+    function makeWhtRow({ pick=false, recipient="company", txn="contract", gross="", rateOverride="" } = {}){
       const tr = document.createElement("tr");
 
-      const tdType = document.createElement("td");
-      const sel = document.createElement("select");
-      for (const t of WHT_DEFAULTS){
+      // Pick (radio)
+      const tdPick = document.createElement("td");
+      const pickRadio = document.createElement("input");
+      pickRadio.type = "radio";
+      pickRadio.name = "whtPickRow";
+      pickRadio.checked = !!pick;
+      tdPick.appendChild(pickRadio);
+
+      // Recipient
+      const tdRec = document.createElement("td");
+      const selRec = document.createElement("select");
+      for (const r of RECIPIENTS){
+        const o = document.createElement("option");
+        o.value = r.key;
+        o.textContent = r.label;
+        if (r.key === recipient) o.selected = true;
+        selRec.appendChild(o);
+      }
+      tdRec.appendChild(selRec);
+
+      // Transaction
+      const tdTxn = document.createElement("td");
+      const selTxn = document.createElement("select");
+      for (const t of WHT_TXN){
         const o = document.createElement("option");
         o.value = t.key;
         o.textContent = t.label;
-        if (t.key === typeKey) o.selected = true;
-        sel.appendChild(o);
+        if (t.key === txn) o.selected = true;
+        selTxn.appendChild(o);
       }
-      tdType.appendChild(sel);
+      tdTxn.appendChild(selTxn);
 
+      // Gross
       const tdGross = document.createElement("td");
       const inGross = document.createElement("input");
       inGross.type = "text";
@@ -1049,21 +1106,24 @@ Author | Financial Strategy</div>
       inGross.placeholder = "0";
       tdGross.appendChild(inGross);
 
+      // Rate override
       const tdRate = document.createElement("td");
       const inRate = document.createElement("input");
       inRate.type = "text";
       inRate.inputMode = "numeric";
       inRate.className = "money";
-      inRate.value = ratePct;
+      inRate.value = rateOverride;
       inRate.placeholder = "auto";
       tdRate.appendChild(inRate);
 
+      // Output
       const tdWht = document.createElement("td");
       const out = document.createElement("span");
       out.className = "tiny";
       out.textContent = "—";
       tdWht.appendChild(out);
 
+      // Delete
       const tdDel = document.createElement("td");
       const del = document.createElement("button");
       del.type = "button";
@@ -1071,7 +1131,9 @@ Author | Financial Strategy</div>
       del.textContent = "×";
       tdDel.appendChild(del);
 
-      tr.appendChild(tdType);
+      tr.appendChild(tdPick);
+      tr.appendChild(tdRec);
+      tr.appendChild(tdTxn);
       tr.appendChild(tdGross);
       tr.appendChild(tdRate);
       tr.appendChild(tdWht);
@@ -1080,19 +1142,22 @@ Author | Financial Strategy</div>
       attachMoneyFormatting(inGross);
       attachMoneyFormatting(inRate);
 
-      function defaultRateFor(key){
-        return (WHT_DEFAULTS.find(x=>x.key===key)?.ratePct) ?? 10;
-      }
-
       function calc(){
         const grossN = parseMoney(inGross.value);
         const override = parseMoney(inRate.value);
-        const rPct = override > 0 ? override : defaultRateFor(sel.value);
-        const w = grossN * (rPct/100);
-        out.textContent = grossN ? (formatN(w) + ` (at ${rPct}%)`) : "—";
+        const autoRate = defaultWhtRate(selRec.value, selTxn.value);
+        const ratePct = override > 0 ? override : autoRate;
+
+        const wht = grossN * (ratePct/100);
+        const note = override > 0 ? "override" : "auto";
+        out.textContent = grossN ? `${formatN(wht)} (${ratePct}% • ${note})` : "—";
       }
 
-      sel.addEventListener("change", calc);
+      // selecting one row should unselect others visually by browser radio behavior
+      pickRadio.addEventListener("change", ()=>{ /* no-op */ });
+
+      selRec.addEventListener("change", calc);
+      selTxn.addEventListener("change", calc);
       inGross.addEventListener("input", calc);
       inRate.addEventListener("input", calc);
       del.addEventListener("click", ()=> tr.remove());
@@ -1100,14 +1165,19 @@ Author | Financial Strategy</div>
       tr._get = ()=> {
         const grossN = parseMoney(inGross.value);
         const override = parseMoney(inRate.value);
-        const rPct = override > 0 ? override : defaultRateFor(sel.value);
-        const w = grossN * (rPct/100);
+        const autoRate = defaultWhtRate(selRec.value, selTxn.value);
+        const ratePct = override > 0 ? override : autoRate;
+        const wht = grossN * (ratePct/100);
         return {
-          typeKey: sel.value,
-          typeLabel: (WHT_DEFAULTS.find(x=>x.key===sel.value)?.label) ?? sel.value,
+          picked: !!pickRadio.checked,
+          recipientKey: selRec.value,
+          recipientLabel: RECIPIENTS.find(x=>x.key===selRec.value)?.label || selRec.value,
+          txnKey: selTxn.value,
+          txnLabel: WHT_TXN.find(x=>x.key===selTxn.value)?.label || selTxn.value,
           gross: grossN,
-          ratePct: rPct,
-          wht: w
+          ratePct,
+          rateSource: (override > 0) ? "override" : "auto",
+          wht
         };
       };
 
@@ -1117,32 +1187,27 @@ Author | Financial Strategy</div>
 
     function seedWHT(){
       whtBody.innerHTML = "";
-      whtBody.appendChild(makeWhtRow({ typeKey:"rent" }));
-      whtBody.appendChild(makeWhtRow({ typeKey:"contracts" }));
-      whtBody.appendChild(makeWhtRow({ typeKey:"consultancy" }));
+      whtBody.appendChild(makeWhtRow({ pick:true, recipient:"company", txn:"contract" }));
+      whtBody.appendChild(makeWhtRow({ recipient:"company", txn:"consulting" }));
+      whtBody.appendChild(makeWhtRow({ recipient:"individual", txn:"rent" }));
+    }
+
+    function getSelectedWhtRow(){
+      const rows = Array.from(whtBody.querySelectorAll("tr")).map(r=>r._get());
+      return rows.find(r=>r.picked) || null;
     }
 
     function computeWHT(){
-      const rows = Array.from(whtBody.querySelectorAll("tr")).map(r=>r._get())
-        .filter(x => x.gross > 0);
-
+      const rows = Array.from(whtBody.querySelectorAll("tr")).map(r=>r._get()).filter(x => x.gross > 0);
       const totalGross = rows.reduce((s,x)=>s + x.gross, 0);
       const totalWht = rows.reduce((s,x)=>s + x.wht, 0);
 
       const paid = parseMoney(whtPaidEl.value);
       const balance = totalWht - paid;
-
       const label = periodLabel();
 
       const taxReturn = {
-        meta: {
-          module: "WHT",
-          generatedAt: nowISO(),
-          period: globalPeriodEl.value,
-          periodLabel: label,
-          taxpayerType: taxpayerTypeEl.value,
-          state: taxStateEl.value || ""
-        },
+        meta: { module:"WHT", generatedAt: nowISO(), period: globalPeriodEl.value, periodLabel: label, ...headerSnapshot() },
         grossBase: totalGross,
         taxableBase: totalGross,
         taxDue: totalWht,
@@ -1152,19 +1217,128 @@ Author | Financial Strategy</div>
           { label: "Total Gross (schedule)", value: totalGross },
           { label: "Total WHT (schedule)", value: totalWht },
           { label: "Already Remitted", value: paid },
-          ...rows.slice(0,8).map(x=>({ label: `WHT: ${x.typeLabel} (${x.ratePct}%) on ₦${formatMoney(x.gross)}`, value: x.wht }))
+          ...rows.slice(0,8).map(x=>({ label: `${x.recipientLabel} • ${x.txnLabel} • ${x.ratePct}% (${x.rateSource}) on ₦${formatMoney(x.gross)}`, value: x.wht }))
         ],
         raw: { rows }
       };
 
-      const inputs = { module:"WHT", header: headerSnapshot(), rows, paid };
+      const inputs = {
+        module:"WHT",
+        header: headerSnapshot(),
+        parties: {
+          payerName: whtPayerNameEl.value || "",
+          payerTin: whtPayerTinEl.value || "",
+          payeeName: whtPayeeNameEl.value || "",
+          payeeTin: whtPayeeTinEl.value || "",
+          certRef: whtCertRefEl.value || ""
+        },
+        rows,
+        paid
+      };
       return { taxReturn, inputs };
     }
 
-    // ---------- CIT MVP ----------
+    function buildWhtCertificateHTML(rowObj){
+      const payerName = (whtPayerNameEl.value || "").trim();
+      const payerTin  = (whtPayerTinEl.value || "").trim();
+      const payeeName = (whtPayeeNameEl.value || "").trim();
+      const payeeTin  = (whtPayeeTinEl.value || "").trim();
+      const certRef   = (whtCertRefEl.value || "").trim();
+      const label = periodLabel();
+      const gen = humanTS(nowISO());
+
+      const gross = rowObj.gross;
+      const ratePct = rowObj.ratePct;
+      const wht = rowObj.wht;
+      const net = Math.max(0, gross - wht);
+
+      const warn = rowObj.rateSource === "override"
+        ? "Rate source: OVERRIDE (user-specified)."
+        : "Rate source: AUTO (matrix default).";
+
+      return `<!doctype html>
+<html><head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TaxIQ — WHT Certificate</title>
+<style>
+  :root{ --ink:#0b1020; --muted:#51607a; --line:#d9e0ea; }
+  *{box-sizing:border-box}
+  body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif; color:var(--ink); background:#fff; }
+  .page{ max-width:900px; margin:28px auto; padding:0 18px 40px; }
+  .hdr{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; padding:14px 0 10px; border-bottom:2px solid var(--line); }
+  .brand h1{ margin:0; font-size:20px; letter-spacing:.2px; }
+  .brand .sub{ margin-top:6px; color:var(--muted); font-size:12px; line-height:1.3; }
+  .meta{ text-align:right; font-size:12px; color:var(--muted); line-height:1.4; white-space:pre-line; }
+  .row{ margin-top:14px; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  table{ width:100%; border-collapse:collapse; }
+  th,td{ padding:10px 12px; border-bottom:1px solid var(--line); font-size:12px; text-align:left; vertical-align:top; }
+  th{ background:#f6f8fb; color:#22304a; }
+  tr:last-child td{ border-bottom:none; }
+  .foot{ margin-top:14px; color:var(--muted); font-size:11px; line-height:1.35; }
+  .btns{ margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; }
+  .btn{ border:1px solid var(--line); padding:10px 12px; border-radius:10px; background:#f6f8fb; cursor:pointer; font-weight:800; }
+  @media print { .btns{ display:none; } .page{ margin:0; max-width:100%; } }
+  .tag{ display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid var(--line); font-size:11px; color:#22304a; background:#f6f8fb; }
+  .note{ margin-top:10px; padding:10px 12px; border-radius:12px; border:1px dashed var(--line); color:var(--muted); font-size:11px; }
+</style>
+</head><body>
+<div class="page">
+  <div class="hdr">
+    <div class="brand">
+      <h1>Withholding Tax (WHT) Certificate</h1>
+      <div class="sub">Generated by TaxIQ (Nigeria) • For record-keeping and audit support</div>
+    </div>
+    <div class="meta">${esc("Generated: " + gen)}
+${esc("Period: " + label)}
+${certRef ? esc("Certificate Ref: " + certRef) : ""}</div>
+  </div>
+
+  <div class="row">
+    <table>
+      <thead><tr><th colspan="2">Parties</th></tr></thead>
+      <tbody>
+        <tr><td>Payer Name</td><td>${esc(payerName || "—")}</td></tr>
+        <tr><td>Payer TIN</td><td>${esc(payerTin || "—")}</td></tr>
+        <tr><td>Payee Name</td><td>${esc(payeeName || "—")}</td></tr>
+        <tr><td>Payee TIN</td><td>${esc(payeeTin || "—")}</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="row">
+    <table>
+      <thead><tr><th colspan="2">Transaction</th></tr></thead>
+      <tbody>
+        <tr><td>Recipient Type</td><td>${esc(rowObj.recipientLabel)}</td></tr>
+        <tr><td>Transaction Type</td><td>${esc(rowObj.txnLabel)}</td></tr>
+        <tr><td>Gross Amount</td><td>${esc(formatN(gross))}</td></tr>
+        <tr><td>WHT Rate</td><td>${esc(String(ratePct) + "%")} (${esc(rowObj.rateSource)})</td></tr>
+        <tr><td>Tax Withheld</td><td>${esc(formatN(wht))}</td></tr>
+        <tr><td>Net Paid (Gross − WHT)</td><td>${esc(formatN(net))}</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">${esc(warn)} If this certificate is used for statutory purposes, confirm the rate and filing requirements applicable to the transaction and parties.</div>
+
+  <div class="foot">
+    <span class="tag">TaxIQ</span>
+    <div style="margin-top:8px">Signature blocks (optional): ______________________ (Payer)  ______________________ (Payee)</div>
+  </div>
+
+  <div class="btns">
+    <button class="btn" onclick="window.print()">Print / Save as PDF</button>
+    <button class="btn" onclick="window.close()">Close</button>
+  </div>
+</div>
+</body></html>`;
+    }
+
+    // =========================
+    // CIT MVP (kept)
+    // =========================
     function citBandRate(turnover){
-      // Common assumption set (editable in later build):
-      // <25m: 0%, 25-100m: 20%, >100m: 30%
       if (turnover < 25_000_000) return 0.0;
       if (turnover <= 100_000_000) return 0.20;
       return 0.30;
@@ -1173,15 +1347,12 @@ Author | Financial Strategy</div>
     function computeCIT(){
       const turnover = parseMoney(citTurnoverEl.value);
       const pbt = parseMoney(citPbtEl.value);
-
-      // allow negative PBT (loss); we handle assessable profit floor at 0 unless min tax enabled
       const addBacks = parseMoney(citAddBacksEl.value);
       const allowDeds = parseMoney(citAllowDedsEl.value);
       const capAllow = parseMoney(citCapAllowEl.value);
       const lossBf = parseMoney(citLossBfEl.value);
 
       const assessable = Math.max(0, (pbt + addBacks) - allowDeds - capAllow - lossBf);
-
       const rate = citBandRate(turnover);
       const citByRate = assessable * rate;
 
@@ -1200,17 +1371,8 @@ Author | Financial Strategy</div>
       const paid = parseMoney(citPaidEl.value);
       const balance = totalTax - paid;
 
-      const label = "Year";
-
       const taxReturn = {
-        meta: {
-          module: "CIT",
-          generatedAt: nowISO(),
-          period: "annual",
-          periodLabel: label,
-          taxpayerType: taxpayerTypeEl.value,
-          state: taxStateEl.value || ""
-        },
+        meta: { module:"CIT", generatedAt: nowISO(), period:"annual", periodLabel:"Year", ...headerSnapshot() },
         grossBase: assessable,
         taxableBase: assessable,
         taxDue: totalTax,
@@ -1227,7 +1389,7 @@ Author | Financial Strategy</div>
           { label: "CIT Band Rate", value: rate },
           { label: "CIT (by rate)", value: citByRate },
           { label: "Minimum Tax (if on)", value: minTax },
-          { label: "CIT Final (max)", value: citFinal },
+          { label: "CIT Final", value: citFinal },
           { label: "TET (if on)", value: tet },
           { label: "Total Tax (CIT + TET)", value: totalTax }
         ],
@@ -1238,15 +1400,17 @@ Author | Financial Strategy</div>
       return { taxReturn, inputs };
     }
 
-    function headerSnapshot(){
-      return {
-        taxpayerType: taxpayerTypeEl.value,
-        state: taxStateEl.value || "",
-        period: globalPeriodEl.value
-      };
+    // =========================
+    // Dispatcher + generic slip printing + saved slips
+    // =========================
+    function computeActive(){
+      if (activeModule === "PAYE") return computePAYE();
+      if (activeModule === "VAT") return computeVAT();
+      if (activeModule === "WHT") return computeWHT();
+      if (activeModule === "CIT") return computeCIT();
+      throw new Error("Unknown module.");
     }
 
-    // ---------- Print Slip (generic) ----------
     function buildSlipHTML(ret, userLabel=""){
       const iso = nowISO();
       const meta = ret.meta || {};
@@ -1265,14 +1429,14 @@ Author | Financial Strategy</div>
         { k:`Gross Base (${label})`, v: formatN(ret.grossBase) },
         { k:`Tax Due (${label})`, v: formatN(ret.taxDue) },
         { k:`Credits/Paid (${label})`, v: formatN(ret.creditsWithheld) },
-        { k:"Balance Payable / Credit", v: formatN(absBal) + ` (${reconTitle})` },
+        { k:"Balance", v: formatN(absBal) + ` (${reconTitle})` },
       ];
 
       const b = Array.isArray(ret.breakdown) ? ret.breakdown : [];
       const bRows = b.slice(0, 10).map(x => ({
         k: x.label,
         v: (typeof x.value === "number")
-            ? (x.label.toLowerCase().includes("rate") ? String(x.value) : formatN(x.value))
+            ? (String(x.label).toLowerCase().includes("rate") ? String(x.value) : formatN(x.value))
             : String(x.value)
       }));
 
@@ -1306,7 +1470,7 @@ Author | Financial Strategy</div>
   <div class="hdr">
     <div class="brand">
       <h1>TaxIQ — Tax Summary Slip</h1>
-      <div class="sub">${esc(module)} (Nigeria) • Reporting Period Summary<br/>Informational summary based on provided inputs.</div>
+      <div class="sub">${esc(module)} (Nigeria) • Reporting Period Summary</div>
     </div>
     <div class="meta">${esc("Generated: " + humanTS(iso))}
 ${esc("Reporting Period: " + label)}
@@ -1334,7 +1498,7 @@ ${userLabel ? esc("Label: " + userLabel) : ""}</div>
 
   <div class="foot">
     <span class="tag">TaxIQ</span>
-    <div style="margin-top:8px">Notes: Rates and eligibility rules differ by transaction and exemptions. Validate against current FIRS guidance for filing.</div>
+    <div style="margin-top:8px">Notes: Validate transaction-specific exemptions and filing requirements against current regulations.</div>
   </div>
 
   <div class="btns">
@@ -1349,13 +1513,13 @@ ${userLabel ? esc("Label: " + userLabel) : ""}</div>
       const w = window.open("", "_blank");
       if (!w){
         setStatus("Popup blocked", "bad");
-        rawOut.textContent = JSON.stringify({ error: "Popup blocked. Allow popups for print slip." }, null, 2);
+        rawOut.textContent = JSON.stringify({ error: "Popup blocked. Allow popups for print." }, null, 2);
         return;
       }
       w.document.open(); w.document.write(html); w.document.close(); w.focus();
     }
 
-    // ---------- Saved slips ----------
+    // ===== Saved slips =====
     function readSlips(){
       try{
         const raw = localStorage.getItem(SLIPS_KEY);
@@ -1448,11 +1612,9 @@ ${userLabel ? esc("Label: " + userLabel) : ""}</div>
         balance: Number(lastReturn.balancePayableOrRefund || 0),
         returnObj: lastReturn
       };
-      const existing = readSlips();
-      writeSlips([obj, ...existing].slice(0, MAX_SLIPS));
+      writeSlips([obj, ...readSlips()].slice(0, MAX_SLIPS));
       renderHistory();
       setStatus("Slip saved", "ok");
-      rawOut.textContent = JSON.stringify({ slipSaved:true, id: obj.id, module: obj.module, at: obj.createdAt }, null, 2);
     }
 
     function clearAllSlips(){
@@ -1461,15 +1623,13 @@ ${userLabel ? esc("Label: " + userLabel) : ""}</div>
       localStorage.removeItem(SLIPS_KEY);
       renderHistory();
       setStatus("Cleared slips", "ok");
-      rawOut.textContent = JSON.stringify({ slipsCleared:true }, null, 2);
     }
 
-    // ---------- Copy/Export ----------
+    // ===== Copy/Export =====
     function buildSummaryText(){
       if (!lastReturn) return "No computation yet.";
       const m = lastReturn.meta || {};
       const label = m.periodLabel || periodLabel();
-
       const bal = Number(lastReturn.balancePayableOrRefund || 0);
       const abs = Math.abs(bal);
       const recon =
@@ -1488,7 +1648,7 @@ ${userLabel ? esc("Label: " + userLabel) : ""}</div>
         `Gross Base (${label}): ${formatN(lastReturn.grossBase)}`,
         `Tax Due (${label}): ${formatN(lastReturn.taxDue)}`,
         `Credits/Paid (${label}): ${formatN(lastReturn.creditsWithheld)}`,
-        `Balance Payable/Credit: ${formatN(abs)} (${recon})`,
+        `Balance: ${formatN(abs)} (${recon})`,
         "",
         "Breakdown:",
         ...(Array.isArray(lastReturn.breakdown) ? lastReturn.breakdown.slice(0,12).map(x => `- ${x.label}: ${typeof x.value === "number" ? (String(x.label).toLowerCase().includes("rate") ? x.value : formatN(x.value)) : x.value}`) : []),
@@ -1508,7 +1668,7 @@ ${userLabel ? esc("Label: " + userLabel) : ""}</div>
 
     function exportJSON(){
       const exportObj = {
-        meta: { app:"TaxIQ", version:"v0.4.2", exportedAt: nowISO() },
+        meta: { app:"TaxIQ", version:"v0.5.0", exportedAt: nowISO() },
         module: activeModule,
         header: headerSnapshot(),
         inputs: lastInputs,
@@ -1525,7 +1685,7 @@ ${userLabel ? esc("Label: " + userLabel) : ""}</div>
       copyHint.textContent = "JSON downloaded.";
     }
 
-    // ---------- Session Save/Load ----------
+    // ===== Session save/load =====
     function hasSession(){ return !!localStorage.getItem(SESSION_KEY); }
     function refreshSessionHint(){
       if (!hasSession()){
@@ -1546,7 +1706,7 @@ ${userLabel ? esc("Label: " + userLabel) : ""}</div>
       const whtRows = Array.from(whtBody.querySelectorAll("tr")).map(tr => tr._get());
 
       return {
-        meta: { version:"v0.4.2", savedAt: nowISO() },
+        meta: { version:"v0.5.0", savedAt: nowISO() },
         activeModule,
         header: headerSnapshot(),
         paye: {
@@ -1568,6 +1728,13 @@ ${userLabel ? esc("Label: " + userLabel) : ""}</div>
           paid: parseMoney(vatPaidEl.value)
         },
         wht: {
+          parties: {
+            payerName: whtPayerNameEl.value || "",
+            payerTin: whtPayerTinEl.value || "",
+            payeeName: whtPayeeNameEl.value || "",
+            payeeTin: whtPayeeTinEl.value || "",
+            certRef: whtCertRefEl.value || ""
+          },
           rows: whtRows,
           paid: parseMoney(whtPaidEl.value)
         },
@@ -1609,7 +1776,7 @@ ${userLabel ? esc("Label: " + userLabel) : ""}</div>
           allowBody.appendChild(makeAllowanceRow({
             name: r?.name || "",
             amount: r?.amount ? formatMoney(r.amount) : "",
-            frequency: (["monthly","quarterly","annual","one-off"].includes(r?.frequency) ? r.frequency : "monthly"),
+            frequency: (FREQ.includes(r?.frequency) ? r.frequency : "monthly"),
             taxable: (r?.taxable !== false)
           }));
         }
@@ -1628,16 +1795,31 @@ ${userLabel ? esc("Label: " + userLabel) : ""}</div>
       vatClaimInputEl.value = s?.vat?.claimInput || "yes";
       vatPaidEl.value = s?.vat?.paid ? formatMoney(s.vat.paid) : "";
 
-      // WHT
+      // WHT parties
+      whtPayerNameEl.value = s?.wht?.parties?.payerName || "";
+      whtPayerTinEl.value  = s?.wht?.parties?.payerTin || "";
+      whtPayeeNameEl.value = s?.wht?.parties?.payeeName || "";
+      whtPayeeTinEl.value  = s?.wht?.parties?.payeeTin || "";
+      whtCertRefEl.value   = s?.wht?.parties?.certRef || "";
+
+      // WHT schedule
       whtBody.innerHTML = "";
       const wr = Array.isArray(s?.wht?.rows) ? s.wht.rows : [];
       if (wr.length){
         for (const r of wr){
           whtBody.appendChild(makeWhtRow({
-            typeKey: r?.typeKey || "rent",
+            pick: !!r?.picked,
+            recipient: r?.recipientKey || "company",
+            txn: r?.txnKey || "contract",
             gross: r?.gross ? formatMoney(r.gross) : "",
-            ratePct: r?.ratePct ? formatMoney(r.ratePct) : ""
+            rateOverride: (r?.rateSource === "override" && r?.ratePct) ? String(r.ratePct) : ""
           }));
+        }
+        // If none are picked, pick the first
+        const pickedAny = Array.from(whtBody.querySelectorAll("tr")).some(tr => tr._get().picked);
+        if (!pickedAny){
+          const firstRadio = whtBody.querySelector('input[type="radio"][name="whtPickRow"]');
+          if (firstRadio) firstRadio.checked = true;
         }
       } else {
         seedWHT();
@@ -1646,7 +1828,7 @@ ${userLabel ? esc("Label: " + userLabel) : ""}</div>
 
       // CIT
       citTurnoverEl.value = s?.cit?.turnover ? formatMoney(s.cit.turnover) : "";
-      citPbtEl.value = (typeof s?.cit?.pbt === "number" && s.cit.pbt !== 0) ? formatMoney(s.cit.pbt) : (s?.cit?.pbt ? formatMoney(s.cit.pbt) : "");
+      citPbtEl.value = s?.cit?.pbt ? formatMoney(s.cit.pbt) : "";
       citAddBacksEl.value = s?.cit?.addBacks ? formatMoney(s.cit.addBacks) : "";
       citAllowDedsEl.value = s?.cit?.allowDeds ? formatMoney(s.cit.allowDeds) : "";
       citCapAllowEl.value = s?.cit?.capAllow ? formatMoney(s.cit.capAllow) : "";
@@ -1675,27 +1857,17 @@ ${userLabel ? esc("Label: " + userLabel) : ""}</div>
       if (!raw) throw new Error("No saved session found.");
       const parsed = JSON.parse(raw);
       setSessionState(parsed);
-      rawOut.textContent = JSON.stringify({ loaded:true, key: SESSION_KEY, savedAt: parsed?.meta?.savedAt || null }, null, 2);
       setStatus("Loaded", "ok");
     }
     function clearSession(){
       localStorage.removeItem(SESSION_KEY);
       refreshSessionHint();
-      rawOut.textContent = JSON.stringify({ cleared:true, key: SESSION_KEY }, null, 2);
       setStatus("Cleared", "ok");
     }
 
-    // ---------- dispatcher ----------
-    function computeActive(){
-      if (activeModule === "PAYE") return computePAYE();
-      if (activeModule === "VAT") return computeVAT();
-      if (activeModule === "WHT") return computeWHT();
-      if (activeModule === "CIT") return computeCIT();
-      throw new Error("Unknown module.");
-    }
-
-    // ---------- events ----------
-    // money formatting
+    // =========================
+    // Wiring
+    // =========================
     [
       basePayEl, monthlyDedsEl, payeWithheldEl,
       vatRateCustomEl, vatSalesStdEl, vatSalesZeroEl, vatSalesExemptEl,
@@ -1711,20 +1883,31 @@ ${userLabel ? esc("Label: " + userLabel) : ""}</div>
     });
 
     btnAddRow.addEventListener("click", ()=> allowBody.appendChild(makeAllowanceRow({ name:"", frequency:"monthly", taxable:true })));
+    btnAddWht.addEventListener("click", ()=> whtBody.appendChild(makeWhtRow({ recipient:"company", txn:"contract" })));
 
-    // WHT rows
-    btnAddWht.addEventListener("click", ()=> whtBody.appendChild(makeWhtRow({ typeKey:"rent" })));
+    btnWhtCert.addEventListener("click", ()=>{
+      // Build certificate from selected row
+      const sel = getSelectedWhtRow();
+      if (!sel){
+        setStatus("Select a row", "bad");
+        rawOut.textContent = JSON.stringify({ error: "Select a WHT row using the Pick column, then print certificate." }, null, 2);
+        return;
+      }
+      if (!sel.gross || sel.gross <= 0){
+        setStatus("Enter gross", "bad");
+        rawOut.textContent = JSON.stringify({ error: "Selected WHT row has zero gross amount. Enter a gross amount first." }, null, 2);
+        return;
+      }
+      const html = buildWhtCertificateHTML(sel);
+      openPrintWindow(html);
+    });
 
-    // actions
     btnCompute.addEventListener("click", ()=>{
       try{
         setStatus("Computing…");
-        clearKPIs();
-        setReconBadge(null);
-        rawOut.textContent = "{}";
-        copyHint.textContent = "—";
-        lastReturn = null;
-        lastInputs = null;
+        clearKPIs(); setReconBadge(null);
+        rawOut.textContent = "{}"; copyHint.textContent = "—";
+        lastReturn = null; lastInputs = null;
 
         const { taxReturn, inputs } = computeActive();
         lastReturn = taxReturn;
@@ -1768,6 +1951,11 @@ ${userLabel ? esc("Label: " + userLabel) : ""}</div>
       vatPaidEl.value = "";
 
       // WHT
+      whtPayerNameEl.value = "";
+      whtPayerTinEl.value = "";
+      whtPayeeNameEl.value = "";
+      whtPayeeTinEl.value = "";
+      whtCertRefEl.value = "";
       whtPaidEl.value = "";
       seedWHT();
 
@@ -1784,13 +1972,10 @@ ${userLabel ? esc("Label: " + userLabel) : ""}</div>
       citTetRateEl.value = "2.5";
       citPaidEl.value = "";
 
-      clearKPIs();
-      setReconBadge(null);
-      rawOut.textContent = "{}";
-      copyHint.textContent = "—";
+      clearKPIs(); setReconBadge(null);
+      rawOut.textContent = "{}"; copyHint.textContent = "—";
       setStatus("Ready");
-      lastReturn = null;
-      lastInputs = null;
+      lastReturn = null; lastInputs = null;
     });
 
     btnCopy.addEventListener("click", ()=>copySummary());
@@ -1802,8 +1987,7 @@ ${userLabel ? esc("Label: " + userLabel) : ""}</div>
         rawOut.textContent = JSON.stringify({ error: "Compute before printing a slip." }, null, 2);
         return;
       }
-      const html = buildSlipHTML(lastReturn, "");
-      openPrintWindow(html);
+      openPrintWindow(buildSlipHTML(lastReturn, ""));
     });
 
     btnSaveSlip.addEventListener("click", ()=>saveSlip());
@@ -1813,17 +1997,6 @@ ${userLabel ? esc("Label: " + userLabel) : ""}</div>
     btnLoadSession.addEventListener("click", ()=>{ try{ loadSession(); } catch(e){ setStatus("Load failed","bad"); rawOut.textContent = JSON.stringify({error:String(e.message||e)},null,2); }});
     btnClearSession.addEventListener("click", ()=>{ try{ clearSession(); } catch(e){ setStatus("Clear failed","bad"); rawOut.textContent = JSON.stringify({error:String(e.message||e)},null,2); }});
 
-    // module switch
-    function syncChipActive(){
-      chipPaye.classList.toggle("active", activeModule==="PAYE");
-      chipVat.classList.toggle("active", activeModule==="VAT");
-      chipWht.classList.toggle("active", activeModule==="WHT");
-      chipCit.classList.toggle("active", activeModule==="CIT");
-    }
-    [chipPaye, chipVat, chipWht, chipCit].forEach(ch=>{
-      ch.addEventListener("click", ()=> setTimeout(syncChipActive, 0));
-    });
-
     // init
     seedPAYE();
     seedWHT();
@@ -1831,12 +2004,9 @@ ${userLabel ? esc("Label: " + userLabel) : ""}</div>
     renderHistory();
     refreshSessionHint();
 
-    // auto-load session if available
     try{
       if (hasSession()) loadSession();
     } catch { /* ignore */ }
-
-    function hasSession(){ return !!localStorage.getItem(SESSION_KEY); }
   </script>
 </body>
 </html>
