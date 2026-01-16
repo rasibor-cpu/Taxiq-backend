@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TaxIQ — Tax Calculator (Single-File)</title>
+  <title>TaxIQ — Nigeria Tax Calculator (Single-File)</title>
   <style>
     :root{
       --bg:#070b14; --card:#0d1627; --card2:#0b1220; --text:#e8eefc; --muted:#a9b6d3;
@@ -53,34 +53,17 @@
       color:var(--text);cursor:pointer;font-weight:700;
     }
     button.secondary{background:linear-gradient(180deg, rgba(255,255,255,.04), transparent 40%), var(--btn2)}
-    button.icon{
-      padding:8px 10px;
-      border-radius:12px;
-      font-weight:900;
-      line-height:1;
-      min-width:40px;
-    }
+    button.icon{padding:8px 10px;border-radius:12px;font-weight:900;line-height:1;min-width:40px}
     button.small{padding:8px 10px;border-radius:12px;font-weight:800}
 
     .table{
       width:100%;
-      border-collapse:separate;
-      border-spacing:0;
-      overflow:hidden;
-      border:1px solid var(--line);
-      border-radius:14px;
-      margin-top:10px;
+      border-collapse:separate;border-spacing:0;overflow:hidden;
+      border:1px solid var(--line);border-radius:14px;margin-top:10px;
     }
-    .table th,.table td{
-      padding:10px 10px;
-      border-bottom:1px solid var(--line);
-      font-size:13px;
-      vertical-align:middle;
-    }
+    .table th,.table td{padding:10px 10px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle;}
     .table th{color:#dbe6ff;text-align:left;background:rgba(255,255,255,.03)}
     .table tr:last-child td{border-bottom:none}
-
-    .namewide{min-width:28ch;width:100%}
 
     .tiny{font-size:12px;color:var(--muted)}
     .pill{
@@ -92,11 +75,8 @@
     .ok{color:var(--ok)}
     .bad{color:var(--danger)}
     pre{
-      white-space:pre-wrap;
-      word-break:break-word;
-      background:rgba(0,0,0,.25);
-      border:1px solid var(--line);
-      padding:12px;border-radius:14px;
+      white-space:pre-wrap;word-break:break-word;background:rgba(0,0,0,.25);
+      border:1px solid var(--line);padding:12px;border-radius:14px;
       color:#dbe6ff;font-size:12px;line-height:1.35;margin:10px 0 0 0;
     }
     .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
@@ -107,141 +87,59 @@
     .kpi .s{margin-top:4px;font-size:12px;color:rgba(169,182,211,.85)}
     .section{margin-top:14px}
 
-    .money{
-      width: 28ch;
-      min-width: 28ch;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .totals{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-      margin-top:10px;
-    }
-    @media(max-width:520px){.totals{grid-template-columns:1fr}}
-    .tot{
-      border:1px solid var(--line);
-      border-radius:14px;
-      background:rgba(255,255,255,.03);
-      padding:12px;
-    }
-    .tot .t{font-size:12px;color:var(--muted)}
-    .tot .v{margin-top:6px;font-size:16px;font-weight:900;color:#fff}
-
-    details{
-      border:1px solid var(--line);
-      border-radius:14px;
-      background:rgba(255,255,255,.02);
-      padding:10px 12px;
-      margin-top:10px;
-    }
-    details summary{
-      cursor:pointer;
-      color:#dbe6ff;
-      font-weight:800;
-      list-style:none;
-    }
-    details summary::-webkit-details-marker{display:none}
-    .badge{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:4px 10px;border-radius:999px;border:1px solid var(--line);
-      background:rgba(255,255,255,.03);
-      font-size:12px;color:var(--muted);margin-left:10px;
-    }
-
-    .modebar{
-      display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px;
-    }
-    .modebar .chip{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:8px 10px;border-radius:999px;border:1px solid var(--line);
-      background:rgba(255,255,255,.02);
-      font-size:12px;color:var(--muted);
-      cursor:pointer;
-      user-select:none;
-    }
-    .modebar input{width:auto}
+    .money{width:28ch;min-width:28ch;font-variant-numeric: tabular-nums;}
 
     .exports{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top:10px;
-      padding-top:10px;
-      border-top:1px solid var(--line);
-      align-items:center;
-    }
-
-    .periodbar{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:flex-end;
-      margin-top:10px;
-      padding-top:10px;
-      border-top:1px solid var(--line);
+      display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;
+      padding-top:10px;border-top:1px solid var(--line);align-items:center;
     }
 
     .statusBadge{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:7px 10px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.03);
-      font-size:12px;
-      color:var(--muted);
-      margin-left:auto;
+      display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border-radius:999px;
+      border:1px solid var(--line);background:rgba(255,255,255,.03);
+      font-size:12px;color:var(--muted);margin-left:auto;
     }
-    .statusBadge.ok{color:var(--ok)}
-    .statusBadge.bad{color:var(--danger)}
+    .statusBadge.ok{color:var(--ok)} .statusBadge.bad{color:var(--danger)}
 
     .toolbarline{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-      margin-top:10px;
-      padding-top:10px;
-      border-top:1px solid var(--line);
+      display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px;
+      padding-top:10px;border-top:1px solid var(--line);
     }
     .toggle{
-      display:inline-flex;
-      gap:8px;
-      align-items:center;
-      padding:8px 10px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.02);
-      font-size:12px;
-      color:var(--muted);
-      user-select:none;
+      display:inline-flex;gap:8px;align-items:center;padding:8px 10px;border-radius:999px;
+      border:1px solid var(--line);background:rgba(255,255,255,.02);
+      font-size:12px;color:var(--muted);user-select:none;
     }
     .toggle input{width:auto}
 
-    .historyHeader{
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
-      margin-top:10px;
-    }
-    .historyList{
-      margin-top:10px;
-      border:1px solid var(--line);
-      border-radius:14px;
-      overflow:hidden;
-    }
+    .historyHeader{display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-top:10px;}
+    .historyList{margin-top:10px;border:1px solid var(--line);border-radius:14px;overflow:hidden;}
     .histRow{
-      display:flex; gap:10px; align-items:center; justify-content:space-between;
-      padding:10px 12px;
-      border-bottom:1px solid var(--line);
-      background:rgba(255,255,255,.02);
+      display:flex;gap:10px;align-items:center;justify-content:space-between;
+      padding:10px 12px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02);
     }
     .histRow:last-child{border-bottom:none}
-    .histMeta{display:flex; flex-direction:column; gap:2px}
+    .histMeta{display:flex;flex-direction:column;gap:2px}
     .histTitle{font-weight:900;color:#fff;font-size:13px}
     .histSub{color:rgba(169,182,211,.85);font-size:12px}
-    .histBtns{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+    .histBtns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+    /* Module chips */
+    .modulebar{
+      display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px;
+      padding:10px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02);
+    }
+    .chip{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 10px;border-radius:999px;border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      font-size:12px;color:var(--muted);
+      cursor:pointer;user-select:none;
+    }
+    .chip input{width:auto}
+    .chip.active{color:#fff;border-color:rgba(255,255,255,.18)}
+    .divider{height:1px;background:var(--line);margin:12px 0}
+    .hide{display:none !important}
   </style>
 </head>
 
@@ -249,170 +147,209 @@
   <div class="wrap">
     <div class="topbar">
       <div>
-        <h1>TaxIQ — Tax Calculator</h1>
+        <h1>TaxIQ — Nigeria Tax Calculator</h1>
         <div class="sub">
-          PAYE module: annualized earnings profile = base pay + taxable allowances − annualized deductions.<br/>
-          End-of-period output: gross → PAYE → net, plus reconciliation vs tax withheld. Includes print slip + saved slips history.
+          Multi-tax shell: PAYE + VAT (active) + WHT (next) + CIT (next).<br/>
+          Output standard: compute → period-end totals → print slip → save slip → history.
         </div>
       </div>
       <div class="sig">Robert Asibor
 Author | Financial Strategy</div>
     </div>
 
+    <!-- MODULE SELECTOR + SHARED HEADER -->
+    <div class="card">
+      <h2>Tax Module Selector <span class="pill" id="activeModulePill">PAYE</span></h2>
+
+      <div class="modulebar" id="modulebar">
+        <label class="chip active" id="chipPaye"><input type="radio" name="taxModule" value="PAYE" checked /> PAYE</label>
+        <label class="chip" id="chipVat"><input type="radio" name="taxModule" value="VAT" /> VAT</label>
+        <label class="chip" id="chipWht"><input type="radio" name="taxModule" value="WHT" /> WHT</label>
+        <label class="chip" id="chipCit"><input type="radio" name="taxModule" value="CIT" /> CIT</label>
+        <span class="tiny" id="moduleHint">VAT is implemented as the next working module. WHT/CIT are placeholders in v0.4.0.</span>
+      </div>
+
+      <div class="divider"></div>
+
+      <h2>Taxpayer / Period Header <span class="pill">Shared</span></h2>
+      <div class="row">
+        <div class="field">
+          <label>Taxpayer Type</label>
+          <select id="taxpayerType">
+            <option value="individual" selected>Individual</option>
+            <option value="business">Business (Sole Prop / Partnership)</option>
+            <option value="company">Company</option>
+          </select>
+          <div class="hint">Used for context and future module rules (CIT/TET/levies).</div>
+        </div>
+
+        <div class="field">
+          <label>State (context)</label>
+          <input id="taxState" type="text" placeholder="e.g., Lagos" />
+          <div class="hint">Optional (PAYE is state-administered; used for notes).</div>
+        </div>
+
+        <div class="field">
+          <label>Reporting Period</label>
+          <select id="globalPeriod">
+            <option value="monthly" selected>Monthly</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="annual">Annual</option>
+          </select>
+          <div class="hint">This period drives module calculations (PAYE/VAT/WHT/CIT).</div>
+        </div>
+      </div>
+    </div>
+
     <div class="grid">
       <!-- INPUTS -->
       <div class="card">
-        <h2>Earnings Profile <span class="pill">PAYE</span></h2>
+        <h2>Inputs <span class="pill" id="inputsPill">PAYE</span></h2>
 
-        <div class="row">
-          <div class="field">
-            <label>Base Pay Amount</label>
-            <input id="basePay" class="money" type="text" inputmode="numeric" placeholder="e.g., 6,000,000" />
-            <div class="hint">Annual by default; you can switch to Monthly.</div>
-          </div>
-
-          <div class="field">
-            <label>Base Pay Frequency</label>
-            <select id="baseFreq">
-              <option value="annual" selected>Annual</option>
-              <option value="monthly">Monthly</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="section">
-          <h2>Allowances (editable)</h2>
-
-          <table class="table">
-            <thead>
-              <tr>
-                <th style="width:34%">Allowance Name</th>
-                <th style="width:22%">Amount</th>
-                <th style="width:16%">Frequency</th>
-                <th style="width:10%">Taxable?</th>
-                <th style="width:14%">Row Annualized</th>
-                <th style="width:4%"></th>
-              </tr>
-            </thead>
-            <tbody id="allowBody"></tbody>
-          </table>
-
-          <div class="btnbar">
-            <button class="secondary" id="btnAddRow">+ Add Allowance Row</button>
-          </div>
-
-          <div class="totals">
-            <div class="tot">
-              <div class="t">Monthly Allowances Total (not annualized)</div>
-              <div class="v" id="totMonthly">—</div>
-            </div>
-            <div class="tot">
-              <div class="t">Quarterly Allowances Total (not annualized)</div>
-              <div class="v" id="totQuarterly">—</div>
-            </div>
-            <div class="tot">
-              <div class="t">Annual/One-off Allowances Total (not annualized)</div>
-              <div class="v" id="totAnnualOneoff">—</div>
-            </div>
-            <div class="tot">
-              <div class="t">Total Allowances (Annualized)</div>
-              <div class="v" id="totAllowAnnualized">—</div>
-            </div>
-          </div>
-
-          <div class="tiny" style="margin-top:8px">
-            Rows are summed by frequency and also annualized for PAYE computation.
-          </div>
-        </div>
-
-        <div class="section">
-          <h2>Deductions</h2>
-
-          <div class="modebar">
-            <label class="chip"><input type="radio" name="dedMode" value="simple" id="dedModeSimple" checked /> Simple</label>
-            <label class="chip"><input type="radio" name="dedMode" value="advanced" id="dedModeAdv" /> Advanced</label>
-            <span class="tiny">Advanced auto-locks and auto-fills the simple deductions input.</span>
-          </div>
-
-          <!-- Simple Mode -->
+        <!-- PAYE PANEL (kept compatible with your existing module import) -->
+        <div id="panelPAYE">
           <div class="row">
             <div class="field">
-              <label>Total Monthly Deductions (Simple Mode)</label>
-              <input id="monthlyDeds" class="money" type="text" inputmode="numeric" placeholder="e.g., 40,000" />
-              <div class="hint">If Advanced mode is active, this field becomes read-only and auto-filled.</div>
+              <label>Base Pay Amount</label>
+              <input id="basePay" class="money" type="text" inputmode="numeric" placeholder="e.g., 6,000,000" />
+              <div class="hint">Annual by default; you can switch to Monthly.</div>
             </div>
+
             <div class="field">
-              <label>Annualized Deductions (auto)</label>
-              <input id="annualDeds" class="money" type="text" readonly />
+              <label>Base Pay Frequency</label>
+              <select id="baseFreq">
+                <option value="annual" selected>Annual</option>
+                <option value="monthly">Monthly</option>
+              </select>
             </div>
           </div>
 
-          <!-- Advanced Mode -->
-          <details id="advDeds">
-            <summary>
-              Advanced Deductions Breakdown
-              <span class="badge">Itemize + annualize + auto-sum</span>
-            </summary>
-
-            <div class="tiny" style="margin-top:8px">
-              Pension is computed as <b>% of Base Pay only</b> (not allowances).
-            </div>
-
-            <div class="row">
-              <div class="field">
-                <label>Employee Pension (% of Base Pay)</label>
-                <input id="pensionPct" class="money" type="text" inputmode="numeric" value="8" />
-                <div class="hint">Used to auto-generate a monthly pension deduction row.</div>
-              </div>
-              <div class="field">
-                <label>Computed Pension (Monthly)</label>
-                <input id="pensionMonthly" class="money" type="text" readonly />
-              </div>
-            </div>
-
+          <div class="section">
+            <h2>Allowances (editable) <span class="pill">PAYE</span></h2>
             <table class="table">
               <thead>
                 <tr>
-                  <th style="width:38%">Deduction Name</th>
+                  <th style="width:34%">Allowance Name</th>
                   <th style="width:22%">Amount</th>
-                  <th style="width:18%">Frequency</th>
-                  <th style="width:16%">Row Annualized</th>
-                  <th style="width:6%"></th>
+                  <th style="width:16%">Frequency</th>
+                  <th style="width:10%">Taxable?</th>
+                  <th style="width:14%">Row Annualized</th>
+                  <th style="width:4%"></th>
                 </tr>
               </thead>
-              <tbody id="dedBody"></tbody>
+              <tbody id="allowBody"></tbody>
             </table>
 
             <div class="btnbar">
-              <button class="secondary" id="btnAddDed">+ Add Deduction Row</button>
+              <button class="secondary" id="btnAddRow">+ Add Allowance Row</button>
             </div>
 
-            <div class="totals">
-              <div class="tot">
-                <div class="t">Total Deductions (Annualized)</div>
-                <div class="v" id="totDedAnnual">—</div>
+            <div class="tiny" style="margin-top:8px">
+              Totals are annualized internally for PAYE computation.
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>Deductions <span class="pill">PAYE</span></h2>
+            <div class="row">
+              <div class="field">
+                <label>Total Monthly Deductions</label>
+                <input id="monthlyDeds" class="money" type="text" inputmode="numeric" placeholder="e.g., 40,000" />
               </div>
-              <div class="tot">
-                <div class="t">Total Deductions (Monthly Equivalent)</div>
-                <div class="v" id="totDedMonthlyEq">—</div>
+              <div class="field">
+                <label>Annualized Deductions (auto)</label>
+                <input id="annualDeds" class="money" type="text" readonly />
               </div>
+            </div>
+            <div class="tiny">
+              (For v0.4.0 shell) PAYE deductions mode remains supported by your runPAYE logic; advanced deduction UI can be re-attached in v0.4.1 if needed.
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label>Tax Already Withheld (for period)</label>
+              <input id="payeWithheld" class="money" type="text" inputmode="numeric" placeholder="e.g., 150,000" />
+              <div class="hint">Used for reconciliation (balance payable / refund).</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VAT PANEL (WORKING SKELETON) -->
+        <div id="panelVAT" class="hide">
+          <div class="row">
+            <div class="field">
+              <label>VAT Rate</label>
+              <select id="vatRate">
+                <option value="0.075" selected>7.5%</option>
+                <option value="0.05">5.0% (legacy / special cases)</option>
+                <option value="custom">Custom…</option>
+              </select>
+              <div class="hint">Default 7.5%. If you select Custom, enter below.</div>
             </div>
 
-            <div class="tiny" style="margin-top:10px">
-              Advanced totals automatically populate the Simple Mode monthly deductions input.
+            <div class="field">
+              <label>Custom VAT Rate (%)</label>
+              <input id="vatRateCustom" class="money" type="text" inputmode="numeric" placeholder="e.g., 7.5" />
+              <div class="hint">Only used when VAT Rate = Custom.</div>
             </div>
-          </details>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label>Taxable Sales / Outputs (VATable)</label>
+              <input id="vatSales" class="money" type="text" inputmode="numeric" placeholder="e.g., 10,000,000" />
+              <div class="hint">Enter VATable supplies for the reporting period.</div>
+            </div>
+
+            <div class="field">
+              <label>Taxable Purchases / Inputs (VATable)</label>
+              <input id="vatPurchases" class="money" type="text" inputmode="numeric" placeholder="e.g., 3,000,000" />
+              <div class="hint">Enter VATable inputs for the reporting period.</div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label>Input VAT Claimable?</label>
+              <select id="vatInputAllowed">
+                <option value="yes" selected>Yes (claim input VAT)</option>
+                <option value="no">No (treat input VAT as non-claimable)</option>
+              </select>
+              <div class="hint">If no, net VAT = output VAT only.</div>
+            </div>
+
+            <div class="field">
+              <label>VAT Already Remitted (for period)</label>
+              <input id="vatPaid" class="money" type="text" inputmode="numeric" placeholder="e.g., 200,000" />
+              <div class="hint">For reconciliation (balance payable / credit).</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WHT PANEL (placeholder) -->
+        <div id="panelWHT" class="hide">
+          <div class="tiny">
+            WHT module placeholder in v0.4.0. Next build will add transaction type + rate table + withholding schedules.
+          </div>
+        </div>
+
+        <!-- CIT PANEL (placeholder) -->
+        <div id="panelCIT" class="hide">
+          <div class="tiny">
+            CIT module placeholder in v0.4.0. Next build will add profit inputs, adjustments, taxable profit, CIT, minimum tax.
+          </div>
         </div>
 
         <div class="btnbar">
-          <button id="btnCalc">Compute PAYE</button>
+          <button id="btnCompute">Compute</button>
           <button class="secondary" id="btnReset">Reset</button>
         </div>
 
         <div class="toolbarline">
-          <button class="secondary" id="btnSave">Save Session</button>
-          <button class="secondary" id="btnLoad">Load Saved</button>
-          <button class="secondary" id="btnClearSaved">Clear Saved</button>
+          <button class="secondary" id="btnSaveSession">Save Session</button>
+          <button class="secondary" id="btnLoadSession">Load Saved</button>
+          <button class="secondary" id="btnClearSession">Clear Saved</button>
 
           <label class="toggle">
             <input type="checkbox" id="autoSave" checked />
@@ -427,97 +364,34 @@ Author | Financial Strategy</div>
       <div class="card">
         <h2>Results <span class="pill" id="statusPill">Ready</span></h2>
 
-        <div class="periodbar">
-          <div class="field" style="flex:1 1 220px; margin:0;">
-            <label>Reporting Period</label>
-            <select id="reportPeriod">
-              <option value="monthly" selected>Monthly</option>
-              <option value="quarterly">Quarterly</option>
-              <option value="annual">Annual</option>
-            </select>
-            <div class="hint">Tax is computed annually and scaled for the selected period.</div>
-          </div>
-
-          <div class="field" style="flex:1 1 240px; margin:0;">
-            <label>Tax Already Withheld (for selected period)</label>
-            <input id="taxWithheld" class="money" type="text" inputmode="numeric" placeholder="e.g., 150,000" />
-            <div class="hint">Enter PAYE already deducted for this reporting period.</div>
-          </div>
-
-          <span class="statusBadge" id="reconBadge">Reconciliation: —</span>
-        </div>
+        <div class="statusBadge" id="reconBadge">Reconciliation: —</div>
 
         <div class="kpis">
           <div class="kpi">
-            <div class="t">Gross Pay for Reporting Period</div>
-            <div class="v" id="kpiGrossPeriod">—</div>
-            <div class="s" id="kpiGrossPeriodSub">—</div>
+            <div class="t" id="kpi1Title">—</div>
+            <div class="v" id="kpi1Val">—</div>
+            <div class="s" id="kpi1Sub">—</div>
           </div>
-
           <div class="kpi">
-            <div class="t">PAYE for Reporting Period</div>
-            <div class="v" id="kpiPayePeriod">—</div>
-            <div class="s" id="kpiPayePeriodSub">—</div>
+            <div class="t" id="kpi2Title">—</div>
+            <div class="v" id="kpi2Val">—</div>
+            <div class="s" id="kpi2Sub">—</div>
           </div>
-
           <div class="kpi">
-            <div class="t">Net Pay for Reporting Period</div>
-            <div class="v" id="kpiNetPeriod">—</div>
-            <div class="s" id="kpiNetPeriodSub">—</div>
+            <div class="t" id="kpi3Title">—</div>
+            <div class="v" id="kpi3Val">—</div>
+            <div class="s" id="kpi3Sub">—</div>
           </div>
-
           <div class="kpi">
-            <div class="t">Balance Payable / (Overpaid)</div>
-            <div class="v" id="kpiBalance">—</div>
-            <div class="s" id="kpiBalanceSub">—</div>
-          </div>
-        </div>
-
-        <div class="section">
-          <h2>Annual Reference (for audit) <span class="pill">Annual</span></h2>
-          <div class="kpis" style="margin-top:0">
-            <div class="kpi">
-              <div class="t">Annual Gross (Base + Taxable Allowances)</div>
-              <div class="v" id="kpiGrossAnnual">—</div>
-              <div class="s" id="kpiGrossAnnualSub">—</div>
-            </div>
-            <div class="kpi">
-              <div class="t">PAYE (Annual)</div>
-              <div class="v" id="kpiPayeAnnual">—</div>
-              <div class="s" id="kpiPayeMonthly">—</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="section">
-          <h2>Reliefs & Taxable Income <span class="pill">Transparency</span></h2>
-          <div class="kpis" style="margin-top:0">
-            <div class="kpi">
-              <div class="t">Annual Income (after deductions)</div>
-              <div class="v" id="kpiAnnualIncome">—</div>
-              <div class="s">Gross − Deductions</div>
-            </div>
-            <div class="kpi">
-              <div class="t">Relief Applied</div>
-              <div class="v" id="kpiRelief">—</div>
-              <div class="s">CRA / relief used in computation</div>
-            </div>
-            <div class="kpi">
-              <div class="t">Taxable Income</div>
-              <div class="v" id="kpiTaxableIncome">—</div>
-              <div class="s">Annual income − relief</div>
-            </div>
-            <div class="kpi">
-              <div class="t">Effective Tax Rate (Annual)</div>
-              <div class="v" id="kpiEffRate">—</div>
-              <div class="s">PAYE ÷ Gross</div>
-            </div>
+            <div class="t" id="kpi4Title">—</div>
+            <div class="v" id="kpi4Val">—</div>
+            <div class="s" id="kpi4Sub">—</div>
           </div>
         </div>
 
         <div class="exports">
           <button class="secondary" id="btnCopy">Copy Summary</button>
-          <button class="secondary" id="btnDownload">Download JSON</button>
+          <button class="secondary" id="btnExport">Download JSON</button>
           <button class="secondary" id="btnPrint">Print Slip</button>
           <button class="secondary" id="btnSaveSlip">Save Slip</button>
           <span class="tiny" id="copyHint">—</span>
@@ -525,18 +399,16 @@ Author | Financial Strategy</div>
 
         <div class="section">
           <h2>Saved Slips <span class="pill" id="slipCountPill">0</span></h2>
-
           <div class="historyHeader">
-            <div class="tiny" id="histHint">Your saved slips are stored on this device (LocalStorage).</div>
+            <div class="tiny" id="histHint">Saved slips are stored on this device (LocalStorage).</div>
             <div class="histBtns">
               <button class="secondary small" id="btnClearSlips">Clear All Slips</button>
             </div>
           </div>
-
           <div class="historyList" id="historyList"></div>
         </div>
 
-        <div class="tiny" style="margin-top:12px">Debug / Errors (always visible):</div>
+        <div class="tiny" style="margin-top:12px">Debug / Errors:</div>
         <pre id="rawOut">{}</pre>
       </div>
     </div>
@@ -545,68 +417,70 @@ Author | Financial Strategy</div>
   <script type="module">
     import { runPAYE } from "./src/modules/paye/paye.js";
 
-    const STORAGE_KEY = "taxiq_paye_session_v2";
-    const SLIPS_KEY = "taxiq_saved_slips_v1";
-    const MAX_SLIPS = 50;
+    // --- storage keys ---
+    const SESSION_KEY = "taxiq_session_v4";
+    const SLIPS_KEY = "taxiq_saved_slips_v2";
+    const MAX_SLIPS = 80;
 
-    const allowBody = document.getElementById("allowBody");
-    const dedBody = document.getElementById("dedBody");
+    // --- module selection ---
+    const chipPaye = document.getElementById("chipPaye");
+    const chipVat  = document.getElementById("chipVat");
+    const chipWht  = document.getElementById("chipWht");
+    const chipCit  = document.getElementById("chipCit");
+    const activeModulePill = document.getElementById("activeModulePill");
+    const inputsPill = document.getElementById("inputsPill");
 
+    const panelPAYE = document.getElementById("panelPAYE");
+    const panelVAT  = document.getElementById("panelVAT");
+    const panelWHT  = document.getElementById("panelWHT");
+    const panelCIT  = document.getElementById("panelCIT");
+
+    const taxpayerTypeEl = document.getElementById("taxpayerType");
+    const taxStateEl = document.getElementById("taxState");
+    const globalPeriodEl = document.getElementById("globalPeriod");
+
+    // --- PAYE elements (kept minimal in v0.4.0 shell) ---
     const basePayEl = document.getElementById("basePay");
     const baseFreqEl = document.getElementById("baseFreq");
-
+    const allowBody = document.getElementById("allowBody");
+    const btnAddRow = document.getElementById("btnAddRow");
     const monthlyDedsEl = document.getElementById("monthlyDeds");
     const annualDedsEl = document.getElementById("annualDeds");
+    const payeWithheldEl = document.getElementById("payeWithheld");
 
-    const advDeds = document.getElementById("advDeds");
-    const dedModeSimple = document.getElementById("dedModeSimple");
-    const dedModeAdv = document.getElementById("dedModeAdv");
+    // --- VAT elements ---
+    const vatRateEl = document.getElementById("vatRate");
+    const vatRateCustomEl = document.getElementById("vatRateCustom");
+    const vatSalesEl = document.getElementById("vatSales");
+    const vatPurchasesEl = document.getElementById("vatPurchases");
+    const vatInputAllowedEl = document.getElementById("vatInputAllowed");
+    const vatPaidEl = document.getElementById("vatPaid");
 
-    const pensionPctEl = document.getElementById("pensionPct");
-    const pensionMonthlyEl = document.getElementById("pensionMonthly");
-
-    const totMonthly = document.getElementById("totMonthly");
-    const totQuarterly = document.getElementById("totQuarterly");
-    const totAnnualOneoff = document.getElementById("totAnnualOneoff");
-    const totAllowAnnualized = document.getElementById("totAllowAnnualized");
-
-    const totDedAnnual = document.getElementById("totDedAnnual");
-    const totDedMonthlyEq = document.getElementById("totDedMonthlyEq");
-
-    const btnAddRow = document.getElementById("btnAddRow");
-    const btnAddDed = document.getElementById("btnAddDed");
-    const btnCalc = document.getElementById("btnCalc");
-    const btnReset = document.getElementById("btnReset");
+    // --- outputs ---
     const statusPill = document.getElementById("statusPill");
-
-    const reportPeriodEl = document.getElementById("reportPeriod");
-    const taxWithheldEl = document.getElementById("taxWithheld");
     const reconBadge = document.getElementById("reconBadge");
 
-    const kpiGrossPeriod = document.getElementById("kpiGrossPeriod");
-    const kpiGrossPeriodSub = document.getElementById("kpiGrossPeriodSub");
+    const kpi1Title = document.getElementById("kpi1Title");
+    const kpi1Val   = document.getElementById("kpi1Val");
+    const kpi1Sub   = document.getElementById("kpi1Sub");
 
-    const kpiPayePeriod = document.getElementById("kpiPayePeriod");
-    const kpiPayePeriodSub = document.getElementById("kpiPayePeriodSub");
+    const kpi2Title = document.getElementById("kpi2Title");
+    const kpi2Val   = document.getElementById("kpi2Val");
+    const kpi2Sub   = document.getElementById("kpi2Sub");
 
-    const kpiNetPeriod = document.getElementById("kpiNetPeriod");
-    const kpiNetPeriodSub = document.getElementById("kpiNetPeriodSub");
+    const kpi3Title = document.getElementById("kpi3Title");
+    const kpi3Val   = document.getElementById("kpi3Val");
+    const kpi3Sub   = document.getElementById("kpi3Sub");
 
-    const kpiBalance = document.getElementById("kpiBalance");
-    const kpiBalanceSub = document.getElementById("kpiBalanceSub");
+    const kpi4Title = document.getElementById("kpi4Title");
+    const kpi4Val   = document.getElementById("kpi4Val");
+    const kpi4Sub   = document.getElementById("kpi4Sub");
 
-    const kpiGrossAnnual = document.getElementById("kpiGrossAnnual");
-    const kpiGrossAnnualSub = document.getElementById("kpiGrossAnnualSub");
-    const kpiPayeAnnual = document.getElementById("kpiPayeAnnual");
-    const kpiPayeMonthly = document.getElementById("kpiPayeMonthly");
-
-    const kpiAnnualIncome = document.getElementById("kpiAnnualIncome");
-    const kpiRelief = document.getElementById("kpiRelief");
-    const kpiTaxableIncome = document.getElementById("kpiTaxableIncome");
-    const kpiEffRate = document.getElementById("kpiEffRate");
+    const btnCompute = document.getElementById("btnCompute");
+    const btnReset = document.getElementById("btnReset");
 
     const btnCopy = document.getElementById("btnCopy");
-    const btnDownload = document.getElementById("btnDownload");
+    const btnExport = document.getElementById("btnExport");
     const btnPrint = document.getElementById("btnPrint");
     const btnSaveSlip = document.getElementById("btnSaveSlip");
     const btnClearSlips = document.getElementById("btnClearSlips");
@@ -614,27 +488,28 @@ Author | Financial Strategy</div>
     const copyHint = document.getElementById("copyHint");
     const rawOut = document.getElementById("rawOut");
 
-    const btnSave = document.getElementById("btnSave");
-    const btnLoad = document.getElementById("btnLoad");
-    const btnClearSaved = document.getElementById("btnClearSaved");
+    // session controls
+    const btnSaveSession = document.getElementById("btnSaveSession");
+    const btnLoadSession = document.getElementById("btnLoadSession");
+    const btnClearSession = document.getElementById("btnClearSession");
     const autoSaveEl = document.getElementById("autoSave");
     const saveHint = document.getElementById("saveHint");
 
+    // history
     const historyList = document.getElementById("historyList");
     const slipCountPill = document.getElementById("slipCountPill");
     const histHint = document.getElementById("histHint");
 
     const FREQ = ["monthly","quarterly","annual","one-off"];
+    let activeModule = "PAYE";
 
-    let lastResult = null;
-    let lastPayload = null;
+    // last results (standard contract)
+    let lastReturn = null;      // standardized tax return object
+    let lastInputs = null;      // standardized inputs snapshot
 
     function nowISO(){ try { return new Date().toISOString(); } catch { return ""; } }
     function humanTS(iso){
-      try{
-        const d = iso ? new Date(iso) : new Date();
-        return d.toLocaleString();
-      } catch { return ""; }
+      try{ const d = iso ? new Date(iso) : new Date(); return d.toLocaleString(); } catch { return ""; }
     }
 
     function setStatus(text, state="ready"){
@@ -650,19 +525,66 @@ Author | Financial Strategy</div>
       const n = Number(cleaned);
       return Number.isFinite(n) ? n : 0;
     }
-
     function formatMoney(n){
       const x = Number(n);
       if (!Number.isFinite(x)) return "";
       return x.toLocaleString(undefined, { maximumFractionDigits: 0 });
     }
-
     function formatInputWithCommas(el){
       const raw = String(el.value ?? "").replace(/,/g,"");
       const digits = raw.replace(/[^\d]/g,"");
       el.value = digits ? formatMoney(Number(digits)) : "";
     }
+    function attachMoneyFormatting(el){
+      el.addEventListener("input", ()=>formatInputWithCommas(el));
+    }
 
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+    function formatN(n){ return "₦ " + formatMoney(Math.round(Number(n||0))); }
+
+    function periodLabel(p){
+      const v = p || globalPeriodEl.value;
+      if (v === "quarterly") return "Quarter";
+      if (v === "annual") return "Year";
+      return "Month";
+    }
+
+    function setModule(mod){
+      activeModule = mod;
+      activeModulePill.textContent = mod;
+      inputsPill.textContent = mod;
+
+      for (const el of [chipPaye, chipVat, chipWht, chipCit]) el.classList.remove("active");
+      if (mod === "PAYE") chipPaye.classList.add("active");
+      if (mod === "VAT")  chipVat.classList.add("active");
+      if (mod === "WHT")  chipWht.classList.add("active");
+      if (mod === "CIT")  chipCit.classList.add("active");
+
+      panelPAYE.classList.toggle("hide", mod !== "PAYE");
+      panelVAT.classList.toggle("hide", mod !== "VAT");
+      panelWHT.classList.toggle("hide", mod !== "WHT");
+      panelCIT.classList.toggle("hide", mod !== "CIT");
+
+      clearKPIs();
+      setReconBadge(null);
+      rawOut.textContent = "{}";
+      setStatus("Ready");
+      lastReturn = null;
+      lastInputs = null;
+    }
+
+    document.querySelectorAll('input[name="taxModule"]').forEach(r=>{
+      r.addEventListener("change", (e)=> setModule(e.target.value));
+    });
+
+    // ---------- PAYE (minimal wrapper around runPAYE) ----------
     function annualize(amount, frequency){
       const a = Number(amount || 0);
       if (!Number.isFinite(a)) return 0;
@@ -673,64 +595,6 @@ Author | Financial Strategy</div>
       return a;
     }
 
-    function attachMoneyFormatting(el){
-      el.addEventListener("input", ()=>formatInputWithCommas(el));
-    }
-
-    function isAdvancedMode(){
-      return dedModeAdv.checked === true;
-    }
-
-    function updateAnnualDeds(){
-      const monthly = parseMoney(monthlyDedsEl.value);
-      annualDedsEl.value = monthly ? formatMoney(monthly * 12) : "";
-    }
-
-    function periodLabel(){
-      const p = reportPeriodEl.value;
-      if (p === "quarterly") return "Quarter";
-      if (p === "annual") return "Year";
-      return "Month";
-    }
-
-    function periodFactor(){
-      const p = reportPeriodEl.value;
-      if (p === "quarterly") return 1/4;
-      if (p === "annual") return 1;
-      return 1/12;
-    }
-
-    function extractNum(obj, keys){
-      for (const k of keys){
-        if (obj && Object.prototype.hasOwnProperty.call(obj,k) && Number.isFinite(Number(obj[k]))){
-          return Number(obj[k]);
-        }
-      }
-      return null;
-    }
-
-    function computeDerived(result){
-      const grossAnnual = Number(result?.breakdown?.baseAnnual || 0) + Number(result?.breakdown?.allowancesAnnual || 0);
-      const payeAnnual = extractNum(result, ["paye","tax","taxPayable","annualTax"]) ?? 0;
-
-      const annualIncome = Number(result?.annualIncome ?? result?.breakdown?.annualIncome ?? 0);
-      const relief = Number(result?.relief ?? 0);
-      const taxableIncome = Number(result?.taxableIncome ?? 0);
-
-      const effRate = grossAnnual > 0 ? (payeAnnual / grossAnnual) : 0;
-
-      const f = periodFactor();
-      const grossPeriod = grossAnnual * f;
-      const payePeriod = payeAnnual * f;
-      const netPeriod = Math.max(0, grossPeriod - payePeriod);
-
-      const withheld = parseMoney(taxWithheldEl.value);
-      const balance = payePeriod - withheld;
-
-      return { grossAnnual, payeAnnual, annualIncome, relief, taxableIncome, effRate, grossPeriod, payePeriod, netPeriod, withheld, balance };
-    }
-
-    // -------- Allowances UI --------
     function makeAllowanceRow({ name="", amount="", frequency="monthly", taxable=true } = {}){
       const tr = document.createElement("tr");
 
@@ -739,7 +603,6 @@ Author | Financial Strategy</div>
       inName.type = "text";
       inName.value = name;
       inName.placeholder = "e.g., Rent/Housing";
-      inName.className = "namewide";
       tdName.appendChild(inName);
 
       const tdAmt = document.createElement("td");
@@ -789,495 +652,355 @@ Author | Financial Strategy</div>
       tr.appendChild(tdAnn);
       tr.appendChild(tdDel);
 
-      function recalcRow(){
+      function recalc(){
         const amt = parseMoney(inAmt.value);
         const ann = annualize(amt, sel.value);
         span.textContent = ann ? ("₦ " + formatMoney(ann)) : "—";
-        recalcAllowanceTotals();
-        renderPeriodAndRecon();
       }
 
       attachMoneyFormatting(inAmt);
-      inAmt.addEventListener("input", recalcRow);
-      sel.addEventListener("change", recalcRow);
-      chk.addEventListener("change", recalcRow);
-      inName.addEventListener("input", ()=>{recalcAllowanceTotals(); renderPeriodAndRecon();});
+      inAmt.addEventListener("input", recalc);
+      sel.addEventListener("change", recalc);
+      chk.addEventListener("change", recalc);
+      del.addEventListener("click", ()=> tr.remove());
 
-      del.addEventListener("click", ()=>{
-        tr.remove();
-        recalcAllowanceTotals();
-        renderPeriodAndRecon();
-      });
-
-      tr._get = () => ({
-        name: inName.value.trim(),
+      tr._get = ()=>({
+        name: inName.value.trim() || "Other allowance",
         amount: parseMoney(inAmt.value),
         frequency: sel.value,
         taxable: chk.checked
       });
 
-      recalcRow();
+      recalc();
       return tr;
     }
 
-    function seedAllowanceRows(){
+    function seedPaye(){
       allowBody.innerHTML = "";
       allowBody.appendChild(makeAllowanceRow({ name:"Rent/Housing", frequency:"monthly", taxable:true }));
       allowBody.appendChild(makeAllowanceRow({ name:"Transport", frequency:"monthly", taxable:true }));
-      allowBody.appendChild(makeAllowanceRow({ name:"Furniture/Fittings", frequency:"monthly", taxable:true }));
-      allowBody.appendChild(makeAllowanceRow({ name:"Entertainment", frequency:"monthly", taxable:true }));
-      for (let i=0;i<8;i++) allowBody.appendChild(makeAllowanceRow({ name:"", frequency:"monthly", taxable:true }));
-      recalcAllowanceTotals();
+      allowBody.appendChild(makeAllowanceRow({ name:"Other", frequency:"monthly", taxable:true }));
+      monthlyDedsEl.value = "";
+      annualDedsEl.value = "";
+      payeWithheldEl.value = "";
     }
 
-    function recalcAllowanceTotals(){
-      const rows = Array.from(allowBody.querySelectorAll("tr"));
-      let m=0,q=0,a=0,one=0,annualized=0;
-
-      for (const r of rows){
-        const item = r._get();
-        if (!item.taxable) continue;
-        if (!item.amount) continue;
-
-        const f = item.frequency;
-        if (f === "monthly") m += item.amount;
-        else if (f === "quarterly") q += item.amount;
-        else if (f === "one-off") one += item.amount;
-        else a += item.amount;
-
-        annualized += annualize(item.amount, f);
-      }
-
-      totMonthly.textContent = "₦ " + formatMoney(m);
-      totQuarterly.textContent = "₦ " + formatMoney(q);
-      totAnnualOneoff.textContent = "₦ " + formatMoney(a + one);
-      totAllowAnnualized.textContent = "₦ " + formatMoney(annualized);
-    }
-
-    // -------- Deductions UI --------
-    function makeDeductionRow({ name="", amount="", frequency="monthly" } = {}){
-      const tr = document.createElement("tr");
-
-      const tdName = document.createElement("td");
-      const inName = document.createElement("input");
-      inName.type = "text";
-      inName.value = name;
-      inName.placeholder = "e.g., NHF / NHIS / Union dues";
-      tdName.appendChild(inName);
-
-      const tdAmt = document.createElement("td");
-      const inAmt = document.createElement("input");
-      inAmt.type = "text";
-      inAmt.inputMode = "numeric";
-      inAmt.className = "money";
-      inAmt.value = amount;
-      inAmt.placeholder = "0";
-      tdAmt.appendChild(inAmt);
-
-      const tdFreq = document.createElement("td");
-      const sel = document.createElement("select");
-      for (const f of FREQ){
-        const o = document.createElement("option");
-        o.value = f;
-        o.textContent = f === "one-off" ? "One-off" : f.charAt(0).toUpperCase() + f.slice(1);
-        if (f === frequency) o.selected = true;
-        sel.appendChild(o);
-      }
-      tdFreq.appendChild(sel);
-
-      const tdAnn = document.createElement("td");
-      const span = document.createElement("span");
-      span.className = "tiny";
-      span.textContent = "—";
-      tdAnn.appendChild(span);
-
-      const tdDel = document.createElement("td");
-      const del = document.createElement("button");
-      del.type = "button";
-      del.className = "secondary icon";
-      del.textContent = "×";
-      del.title = "Remove row";
-      tdDel.appendChild(del);
-
-      tr.appendChild(tdName);
-      tr.appendChild(tdAmt);
-      tr.appendChild(tdFreq);
-      tr.appendChild(tdAnn);
-      tr.appendChild(tdDel);
-
-      function recalcRow(){
-        const amt = parseMoney(inAmt.value);
-        const ann = annualize(amt, sel.value);
-        span.textContent = ann ? ("₦ " + formatMoney(ann)) : "—";
-        recalcDeductionTotals();
-        renderPeriodAndRecon();
-      }
-
-      attachMoneyFormatting(inAmt);
-      inAmt.addEventListener("input", recalcRow);
-      sel.addEventListener("change", recalcRow);
-      inName.addEventListener("input", ()=>{recalcDeductionTotals(); renderPeriodAndRecon();});
-
-      del.addEventListener("click", ()=>{
-        tr.remove();
-        recalcDeductionTotals();
-        renderPeriodAndRecon();
-      });
-
-      tr._get = () => ({
-        name: inName.value.trim() || "Other deduction",
-        amount: parseMoney(inAmt.value),
-        frequency: sel.value
-      });
-
-      recalcRow();
-      return tr;
-    }
-
-    function seedDeductionRows(){
-      dedBody.innerHTML = "";
-      dedBody.appendChild(makeDeductionRow({ name:"NHF", frequency:"monthly" }));
-      dedBody.appendChild(makeDeductionRow({ name:"NHIS / HMO", frequency:"monthly" }));
-      dedBody.appendChild(makeDeductionRow({ name:"Life Assurance", frequency:"monthly" }));
-      recalcDeductionTotals();
-    }
-
-    function computePensionMonthly(){
+    function computePAYE(){
       const basePay = parseMoney(basePayEl.value);
-      const baseFreq = baseFreqEl.value;
-      const pct = parseMoney(pensionPctEl.value);
-      if (!basePay || basePay <= 0 || !pct) return 0;
+      if (!basePay || basePay <= 0) throw new Error("PAYE: Base Pay must be greater than 0.");
 
-      const pensionOnBase = (pct/100) * basePay;
-      const pensionMonthly = (baseFreq === "annual") ? (pensionOnBase/12) : pensionOnBase;
-      return Math.max(0, pensionMonthly);
+      const baseFrequency = baseFreqEl.value;
+
+      const rows = Array.from(allowBody.querySelectorAll("tr"));
+      const allowances = rows.map(r => r._get()).filter(x => x.amount > 0 || (x.name && x.name.trim()));
+
+      const monthlyDed = parseMoney(monthlyDedsEl.value);
+      annualDedsEl.value = monthlyDed ? formatMoney(monthlyDed * 12) : "";
+
+      const deductions = monthlyDed > 0
+        ? [{ name:"Total Monthly Deductions", amount: monthlyDed, frequency:"monthly" }]
+        : [];
+
+      const payload = { basePay, baseFrequency, allowances, deductions };
+
+      const result = runPAYE(payload);
+
+      const payeAnnual = Number(result?.paye ?? result?.tax ?? result?.taxPayable ?? result?.annualTax ?? 0);
+      const breakdown = result?.breakdown || {};
+      const grossAnnual = Number(breakdown.baseAnnual || 0) + Number(breakdown.allowancesAnnual || 0);
+
+      const f = globalPeriodEl.value === "quarterly" ? 1/4 : (globalPeriodEl.value === "annual" ? 1 : 1/12);
+      const label = periodLabel();
+
+      const payePeriod = payeAnnual * f;
+      const grossPeriod = grossAnnual * f;
+      const netPeriod = Math.max(0, grossPeriod - payePeriod);
+
+      const withheld = parseMoney(payeWithheldEl.value);
+      const balance = payePeriod - withheld;
+
+      // standard return object
+      const taxReturn = {
+        meta: {
+          module: "PAYE",
+          generatedAt: nowISO(),
+          period: globalPeriodEl.value,
+          periodLabel: label,
+          taxpayerType: taxpayerTypeEl.value,
+          state: taxStateEl.value || ""
+        },
+        grossBase: grossPeriod,
+        taxableBase: Number(result?.taxableIncome ?? 0),
+        taxDue: payePeriod,
+        creditsWithheld: withheld,
+        balancePayableOrRefund: balance,
+        breakdown: [
+          { label: "Gross (period)", value: grossPeriod },
+          { label: "PAYE (period)", value: payePeriod },
+          { label: "Net (period)", value: netPeriod },
+          { label: "Annual PAYE", value: payeAnnual },
+          { label: "Annual Gross", value: grossAnnual }
+        ],
+        raw: result
+      };
+
+      const inputs = {
+        module: "PAYE",
+        payload,
+        withheld,
+        globalPeriod: globalPeriodEl.value,
+        taxpayerType: taxpayerTypeEl.value,
+        state: taxStateEl.value || ""
+      };
+
+      return { taxReturn, inputs };
     }
 
-    function recalcDeductionTotals(){
-      const pensionMonthly = computePensionMonthly();
-      pensionMonthlyEl.value = pensionMonthly ? formatMoney(Math.round(pensionMonthly)) : "";
-
-      const rows = Array.from(dedBody.querySelectorAll("tr")).map(tr => tr._get());
-      const allRows = [
-        ...(pensionMonthly > 0 ? [{ name:"Employee Pension", amount: pensionMonthly, frequency:"monthly" }] : []),
-        ...rows
-      ].filter(r => r.amount && r.amount > 0);
-
-      let totalAnnual = 0;
-      for (const r of allRows) totalAnnual += annualize(r.amount, r.frequency);
-
-      const monthlyEq = totalAnnual / 12;
-
-      totDedAnnual.textContent = "₦ " + formatMoney(Math.round(totalAnnual));
-      totDedMonthlyEq.textContent = "₦ " + formatMoney(Math.round(monthlyEq));
-
-      syncAdvancedToSimple();
-    }
-
-    function syncAdvancedToSimple(){
-      if (!isAdvancedMode()){
-        monthlyDedsEl.readOnly = false;
-        updateAnnualDeds();
-        return;
+    // ---------- VAT (working skeleton) ----------
+    function getVatRate(){
+      const sel = vatRateEl.value;
+      if (sel === "custom"){
+        const pct = parseMoney(vatRateCustomEl.value);
+        const r = pct / 100;
+        if (!(r > 0 && r < 1)) throw new Error("VAT: Custom rate must be a valid percent (e.g., 7.5).");
+        return r;
       }
-
-      advDeds.open = true;
-
-      const annualText = (totDedAnnual.textContent || "").replace(/[^\d,]/g,"");
-      const totalAnnual = parseMoney(annualText);
-      const totalMonthlyEq = totalAnnual > 0 ? Math.round(totalAnnual / 12) : 0;
-
-      monthlyDedsEl.value = totalMonthlyEq ? formatMoney(totalMonthlyEq) : "";
-      monthlyDedsEl.readOnly = true;
-      updateAnnualDeds();
+      return Number(sel);
     }
 
-    // -------- Render cards --------
-    function clearOutputCards(){
-      kpiGrossPeriod.textContent = "—";
-      kpiGrossPeriodSub.textContent = "—";
-      kpiPayePeriod.textContent = "—";
-      kpiPayePeriodSub.textContent = "—";
-      kpiNetPeriod.textContent = "—";
-      kpiNetPeriodSub.textContent = "—";
-      kpiBalance.textContent = "—";
-      kpiBalanceSub.textContent = "—";
+    function computeVAT(){
+      const rate = getVatRate();
+      const sales = parseMoney(vatSalesEl.value);
+      const purchases = parseMoney(vatPurchasesEl.value);
+      const inputAllowed = (vatInputAllowedEl.value === "yes");
+      const alreadyPaid = parseMoney(vatPaidEl.value);
 
-      kpiGrossAnnual.textContent = "—";
-      kpiGrossAnnualSub.textContent = "—";
-      kpiPayeAnnual.textContent = "—";
-      kpiPayeMonthly.textContent = "—";
+      // simple skeleton: output VAT = sales * rate; input VAT = purchases * rate if allowed
+      const outputVat = sales * rate;
+      const inputVat = inputAllowed ? (purchases * rate) : 0;
+      const netVat = outputVat - inputVat; // may be negative (credit)
 
-      kpiAnnualIncome.textContent = "—";
-      kpiRelief.textContent = "—";
-      kpiTaxableIncome.textContent = "—";
-      kpiEffRate.textContent = "—";
+      const label = periodLabel();
 
+      const balance = netVat - alreadyPaid; // + payable, - credit
+
+      const taxReturn = {
+        meta: {
+          module: "VAT",
+          generatedAt: nowISO(),
+          period: globalPeriodEl.value,
+          periodLabel: label,
+          taxpayerType: taxpayerTypeEl.value,
+          state: taxStateEl.value || ""
+        },
+        grossBase: sales,
+        taxableBase: sales,
+        taxDue: netVat,
+        creditsWithheld: alreadyPaid,
+        balancePayableOrRefund: balance,
+        breakdown: [
+          { label: "VAT Rate", value: rate },
+          { label: "Taxable Sales (period)", value: sales },
+          { label: "Taxable Purchases (period)", value: purchases },
+          { label: "Output VAT", value: outputVat },
+          { label: "Input VAT", value: inputVat },
+          { label: "Net VAT (Output - Input)", value: netVat }
+        ],
+        raw: { rate, sales, purchases, outputVat, inputVat, netVat, inputAllowed }
+      };
+
+      const inputs = {
+        module: "VAT",
+        rate,
+        sales,
+        purchases,
+        inputAllowed,
+        alreadyPaid,
+        globalPeriod: globalPeriodEl.value,
+        taxpayerType: taxpayerTypeEl.value,
+        state: taxStateEl.value || ""
+      };
+
+      return { taxReturn, inputs };
+    }
+
+    // ---------- KPI render (generic for all modules) ----------
+    function clearKPIs(){
+      for (const el of [kpi1Title,kpi1Val,kpi1Sub,kpi2Title,kpi2Val,kpi2Sub,kpi3Title,kpi3Val,kpi3Sub,kpi4Title,kpi4Val,kpi4Sub]){
+        el.textContent = "—";
+      }
       reconBadge.textContent = "Reconciliation: —";
       reconBadge.classList.remove("ok","bad");
     }
 
-    function renderPeriodAndRecon(){
-      if (!lastResult){
+    function setReconBadge(ret){
+      if (!ret){
         reconBadge.textContent = "Reconciliation: —";
         reconBadge.classList.remove("ok","bad");
-        kpiGrossPeriod.textContent = "—";
-        kpiGrossPeriodSub.textContent = "—";
-        kpiPayePeriod.textContent = "—";
-        kpiPayePeriodSub.textContent = "—";
-        kpiNetPeriod.textContent = "—";
-        kpiNetPeriodSub.textContent = "—";
-        kpiBalance.textContent = "—";
-        kpiBalanceSub.textContent = "—";
         return;
       }
+      const b = Number(ret.balancePayableOrRefund || 0);
+      const abs = Math.abs(b);
 
-      const d = computeDerived(lastResult);
-      const label = periodLabel();
-
-      kpiGrossPeriod.textContent = "₦ " + formatMoney(Math.round(d.grossPeriod));
-      kpiGrossPeriodSub.textContent = `Scaled annual gross ₦${formatMoney(Math.round(d.grossAnnual))} to ${label.toLowerCase()}`;
-
-      kpiPayePeriod.textContent = "₦ " + formatMoney(Math.round(d.payePeriod));
-      kpiPayePeriodSub.textContent = `Scaled annual PAYE ₦${formatMoney(Math.round(d.payeAnnual))} to ${label.toLowerCase()}`;
-
-      kpiNetPeriod.textContent = "₦ " + formatMoney(Math.round(d.netPeriod));
-      kpiNetPeriodSub.textContent = `${label} gross − ${label} PAYE`;
-
-      const bal = d.balance;
-      const absBal = Math.abs(bal);
-
-      if (absBal < 0.5){
+      if (abs < 0.5){
         reconBadge.textContent = "Reconciliation: Settled";
-        reconBadge.classList.remove("bad");
-        reconBadge.classList.add("ok");
-        kpiBalance.textContent = "₦ 0";
-        kpiBalanceSub.textContent = `${label} PAYE ₦${formatMoney(Math.round(d.payePeriod))} − Withheld ₦${formatMoney(Math.round(d.withheld))}`;
-      } else if (bal > 0){
+        reconBadge.classList.add("ok"); reconBadge.classList.remove("bad");
+        return;
+      }
+      if (b > 0){
         reconBadge.textContent = "Reconciliation: Balance Payable";
-        reconBadge.classList.remove("ok");
-        reconBadge.classList.add("bad");
-        kpiBalance.textContent = "₦ " + formatMoney(Math.round(absBal));
-        kpiBalanceSub.textContent = `Payable = ${label} PAYE ₦${formatMoney(Math.round(d.payePeriod))} − Withheld ₦${formatMoney(Math.round(d.withheld))}`;
+        reconBadge.classList.add("bad"); reconBadge.classList.remove("ok");
       } else {
-        reconBadge.textContent = "Reconciliation: Overpaid (Refund)";
-        reconBadge.classList.remove("bad");
-        reconBadge.classList.add("ok");
-        kpiBalance.textContent = "₦ " + formatMoney(Math.round(absBal));
-        kpiBalanceSub.textContent = `Overpaid = Withheld ₦${formatMoney(Math.round(d.withheld))} − ${label} PAYE ₦${formatMoney(Math.round(d.payePeriod))}`;
+        reconBadge.textContent = "Reconciliation: Credit / Overpaid";
+        reconBadge.classList.add("ok"); reconBadge.classList.remove("bad");
       }
     }
 
-    function render(result){
-      lastResult = result;
-      rawOut.textContent = JSON.stringify(result, null, 2);
+    function renderReturn(ret){
+      // Show a consistent layout across taxes:
+      // KPI1: Gross/Taxable Base
+      // KPI2: Tax Due (period)
+      // KPI3: Credits/Withheld/Paid
+      // KPI4: Balance Payable / Credit
+      const module = ret?.meta?.module || "—";
+      const label = ret?.meta?.periodLabel || periodLabel();
 
-      const d = computeDerived(result);
+      kpi1Title.textContent = module === "VAT" ? `Taxable Sales (${label})` : `Gross Base (${label})`;
+      kpi1Val.textContent = formatN(ret.grossBase);
+      kpi1Sub.textContent = module === "VAT" ? "VATable supplies entered" : "Period gross base";
 
-      kpiGrossAnnual.textContent = "₦ " + formatMoney(Math.round(d.grossAnnual));
-      kpiGrossAnnualSub.textContent = `Base + taxable allowances (annualized)`;
+      kpi2Title.textContent = module === "VAT" ? `Net VAT (${label})` : `Tax Due (${label})`;
+      kpi2Val.textContent = formatN(ret.taxDue);
+      kpi2Sub.textContent = module === "VAT" ? "Output VAT − Input VAT" : "Computed liability";
 
-      kpiPayeAnnual.textContent = "₦ " + formatMoney(Math.round(d.payeAnnual));
-      kpiPayeMonthly.textContent = `≈ ₦ ${formatMoney(Math.round(d.payeAnnual/12))} per month`;
+      kpi3Title.textContent = module === "VAT" ? `Already Remitted (${label})` : `Withheld (${label})`;
+      kpi3Val.textContent = formatN(ret.creditsWithheld);
+      kpi3Sub.textContent = "Used for reconciliation";
 
-      kpiAnnualIncome.textContent = d.annualIncome ? ("₦ " + formatMoney(Math.round(d.annualIncome))) : "—";
-      kpiRelief.textContent = "₦ " + formatMoney(Math.round(d.relief || 0));
-      kpiTaxableIncome.textContent = d.taxableIncome ? ("₦ " + formatMoney(Math.round(d.taxableIncome))) : "—";
+      const bal = Number(ret.balancePayableOrRefund || 0);
+      const abs = Math.abs(bal);
+      kpi4Title.textContent = "Balance Payable / Credit";
+      kpi4Val.textContent = formatN(abs);
+      kpi4Sub.textContent = (abs < 0.5) ? "Settled" : (bal > 0 ? "Payable" : "Credit");
 
-      const pct = (d.effRate * 100);
-      kpiEffRate.textContent = (Number.isFinite(pct) ? pct.toFixed(2) : "0.00") + "%";
-
-      renderPeriodAndRecon();
+      setReconBadge(ret);
+      rawOut.textContent = JSON.stringify(ret, null, 2);
     }
 
-    function validate(){
-      const base = parseMoney(basePayEl.value);
-      if (!base || base <= 0) throw new Error("Base Pay must be greater than 0.");
-    }
+    // ---------- Print Slip (generic for any module) ----------
+    function buildSlipHTML(ret, userLabel=""){
+      const iso = nowISO();
+      const meta = ret.meta || {};
+      const module = meta.module || "Tax";
+      const label = meta.periodLabel || periodLabel();
+      const mode = module; // module itself
 
-    function applyModeUI(){
-      if (isAdvancedMode()){
-        advDeds.open = true;
-        monthlyDedsEl.readOnly = true;
-        recalcDeductionTotals();
-      } else {
-        monthlyDedsEl.readOnly = false;
-        updateAnnualDeds();
-      }
-    }
+      const bal = Number(ret.balancePayableOrRefund || 0);
+      const absBal = Math.abs(bal);
+      let reconTitle = "Settled";
+      if (absBal >= 0.5) reconTitle = bal > 0 ? "Balance Payable" : "Credit / Overpaid";
 
-    function getPayload(){
-      recalcAllowanceTotals();
-      applyModeUI();
+      const rows = [];
+      rows.push({ k:"Tax Module", v: module });
+      rows.push({ k:"Taxpayer Type", v: meta.taxpayerType || "" });
+      if (meta.state) rows.push({ k:"State", v: meta.state });
 
-      const basePay = parseMoney(basePayEl.value);
-      const baseFrequency = baseFreqEl.value;
+      rows.push({ k:`Gross Base (${label})`, v: formatN(ret.grossBase) });
+      rows.push({ k:`Tax Due (${label})`, v: formatN(ret.taxDue) });
+      rows.push({ k:`Credits / Paid (${label})`, v: formatN(ret.creditsWithheld) });
+      rows.push({ k:"Balance Payable / Credit", v: formatN(absBal) });
 
-      const allowRows = Array.from(allowBody.querySelectorAll("tr"));
-      const allowances = [];
-      for (const r of allowRows){
-        const it = r._get();
-        const hasName = it.name.length > 0;
-        const hasAmt = it.amount && it.amount !== 0;
-        if (!hasName && !hasAmt) continue;
-        allowances.push({
-          name: hasName ? it.name : "Other allowance",
-          amount: it.amount || 0,
-          frequency: it.frequency,
-          taxable: it.taxable !== false
-        });
-      }
-
-      let deductions = [];
-      if (isAdvancedMode()){
-        const pensionMonthly = computePensionMonthly();
-        if (pensionMonthly > 0){
-          deductions.push({ name:"Employee Pension", amount: pensionMonthly, frequency:"monthly" });
-        }
-        const dedRows = Array.from(dedBody.querySelectorAll("tr")).map(tr => tr._get());
-        for (const d of dedRows){
-          if (!d.amount || d.amount <= 0) continue;
-          deductions.push({ name: d.name, amount: d.amount, frequency: d.frequency });
-        }
-      } else {
-        const monthlyDed = parseMoney(monthlyDedsEl.value);
-        if (monthlyDed > 0){
-          deductions = [{ name:"Total Monthly Deductions", amount: monthlyDed, frequency:"monthly" }];
-        }
-      }
-
-      return { basePay, baseFrequency, allowances, deductions };
-    }
-
-    // ---------- Print Slip ----------
-    function esc(s){
-      return String(s ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-    function formatN(n){ return "₦ " + formatMoney(Math.round(Number(n||0))); }
-
-    function buildSlipHTML(slip){
-      const label = slip.reportingPeriodLabel;
-      const mode = slip.mode;
-      const reconTitle = slip.reconTitle;
+      // module breakdown excerpt
+      const b = Array.isArray(ret.breakdown) ? ret.breakdown : [];
+      const bRows = b.slice(0, 8).map(x => ({ k: x.label, v: (typeof x.value === "number" ? (x.label.includes("Rate") ? String(x.value) : formatN(x.value)) : String(x.value)) }));
 
       return `<!doctype html>
 <html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TaxIQ — Tax Summary Slip</title>
-  <style>
-    :root{ --ink:#0b1020; --muted:#51607a; --line:#d9e0ea; }
-    *{box-sizing:border-box}
-    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif; color:var(--ink); background:#fff; }
-    .page{ max-width:820px; margin:28px auto; padding:0 18px 40px; }
-    .hdr{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; padding:14px 0 10px; border-bottom:2px solid var(--line); }
-    .brand h1{ margin:0; font-size:20px; letter-spacing:.2px; }
-    .brand .sub{ margin-top:6px; color:var(--muted); font-size:12px; line-height:1.3; }
-    .meta{ text-align:right; font-size:12px; color:var(--muted); line-height:1.4; white-space:pre-line; }
-    .boxgrid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
-    @media print { .page{ margin:0; max-width:100%; } }
-    @media(max-width:640px){ .boxgrid{ grid-template-columns:1fr; } .meta{text-align:left} }
-    .box{ border:1px solid var(--line); border-radius:12px; padding:12px; }
-    .box .t{ font-size:12px; color:var(--muted); }
-    .box .v{ margin-top:6px; font-size:18px; font-weight:900; }
-    .row{ margin-top:14px; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
-    table{ width:100%; border-collapse:collapse; }
-    th,td{ padding:10px 12px; border-bottom:1px solid var(--line); font-size:12px; text-align:left; }
-    th{ background:#f6f8fb; color:#22304a; }
-    tr:last-child td{ border-bottom:none; }
-    .foot{ margin-top:14px; color:var(--muted); font-size:11px; line-height:1.35; }
-    .btns{ margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; }
-    .btn{ border:1px solid var(--line); padding:10px 12px; border-radius:10px; background:#f6f8fb; cursor:pointer; font-weight:800; }
-    @media print { .btns{ display:none; } }
-    .tag{ display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid var(--line); font-size:11px; color:#22304a; background:#f6f8fb; }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TaxIQ — Tax Summary Slip</title>
+<style>
+  :root{ --ink:#0b1020; --muted:#51607a; --line:#d9e0ea; }
+  *{box-sizing:border-box}
+  body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif; color:var(--ink); background:#fff; }
+  .page{ max-width:820px; margin:28px auto; padding:0 18px 40px; }
+  .hdr{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; padding:14px 0 10px; border-bottom:2px solid var(--line); }
+  .brand h1{ margin:0; font-size:20px; letter-spacing:.2px; }
+  .brand .sub{ margin-top:6px; color:var(--muted); font-size:12px; line-height:1.3; }
+  .meta{ text-align:right; font-size:12px; color:var(--muted); line-height:1.4; white-space:pre-line; }
+  .boxgrid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
+  @media print { .page{ margin:0; max-width:100%; } }
+  @media(max-width:640px){ .boxgrid{ grid-template-columns:1fr; } .meta{text-align:left} }
+  .box{ border:1px solid var(--line); border-radius:12px; padding:12px; }
+  .box .t{ font-size:12px; color:var(--muted); }
+  .box .v{ margin-top:6px; font-size:18px; font-weight:900; }
+  .row{ margin-top:14px; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  table{ width:100%; border-collapse:collapse; }
+  th,td{ padding:10px 12px; border-bottom:1px solid var(--line); font-size:12px; text-align:left; vertical-align:top; }
+  th{ background:#f6f8fb; color:#22304a; }
+  tr:last-child td{ border-bottom:none; }
+  .foot{ margin-top:14px; color:var(--muted); font-size:11px; line-height:1.35; }
+  .btns{ margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; }
+  .btn{ border:1px solid var(--line); padding:10px 12px; border-radius:10px; background:#f6f8fb; cursor:pointer; font-weight:800; }
+  @media print { .btns{ display:none; } }
+  .tag{ display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid var(--line); font-size:11px; color:#22304a; background:#f6f8fb; }
+</style>
 </head>
 <body>
-  <div class="page">
-    <div class="hdr">
-      <div class="brand">
-        <h1>TaxIQ — Tax Summary Slip</h1>
-        <div class="sub">
-          PAYE (Nigeria) • Reporting Period Summary<br/>
-          This slip is an informational summary based on provided inputs.
-        </div>
-      </div>
-      <div class="meta">${esc("Generated: " + slip.generatedHuman)}
+<div class="page">
+  <div class="hdr">
+    <div class="brand">
+      <h1>TaxIQ — Tax Summary Slip</h1>
+      <div class="sub">${esc(module)} (Nigeria) • Reporting Period Summary<br/>This slip is an informational summary based on provided inputs.</div>
+    </div>
+    <div class="meta">${esc("Generated: " + humanTS(iso))}
 ${esc("Reporting Period: " + label)}
-${esc("Mode: " + mode)}
-${slip.userLabel ? esc("Label: " + slip.userLabel) : ""}</div>
+${esc("Module: " + module)}
+${userLabel ? esc("Label: " + userLabel) : ""}</div>
+  </div>
+
+  <div class="boxgrid">
+    <div class="box">
+      <div class="t">Reconciliation Status</div>
+      <div class="v">${esc(reconTitle)}</div>
+      <div class="t" style="margin-top:6px">Balance / Credit: ${esc(formatN(absBal))}</div>
     </div>
-
-    <div class="boxgrid">
-      <div class="box">
-        <div class="t">Base Pay</div>
-        <div class="v">${esc(formatN(slip.basePay))}</div>
-        <div class="t" style="margin-top:6px">Frequency: ${esc(slip.baseFreq)}</div>
-      </div>
-
-      <div class="box">
-        <div class="t">Reconciliation Status</div>
-        <div class="v">${esc(reconTitle)}</div>
-        <div class="t" style="margin-top:6px">Tax Withheld (${esc(label)}): ${esc(formatN(slip.withheld))}</div>
-      </div>
-    </div>
-
-    <div class="boxgrid">
-      <div class="box">
-        <div class="t">Gross (${esc(label)})</div>
-        <div class="v">${esc(formatN(slip.grossPeriod))}</div>
-      </div>
-      <div class="box">
-        <div class="t">PAYE Liability (${esc(label)})</div>
-        <div class="v">${esc(formatN(slip.payePeriod))}</div>
-      </div>
-      <div class="box">
-        <div class="t">Net (${esc(label)})</div>
-        <div class="v">${esc(formatN(slip.netPeriod))}</div>
-      </div>
-      <div class="box">
-        <div class="t">Balance Payable / (Refund)</div>
-        <div class="v">${esc(formatN(slip.balanceAbs))}</div>
-        <div class="t" style="margin-top:6px">${esc(reconTitle)}</div>
-      </div>
-    </div>
-
-    <div class="row">
-      <table>
-        <thead>
-          <tr>
-            <th colspan="2">Annual Reference (Audit)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td>Annual Gross</td><td>${esc(formatN(slip.grossAnnual))}</td></tr>
-          <tr><td>Annual PAYE</td><td>${esc(formatN(slip.payeAnnual))}</td></tr>
-          <tr><td>Annual Income (after deductions)</td><td>${esc(formatN(slip.annualIncome))}</td></tr>
-          <tr><td>Relief Applied</td><td>${esc(formatN(slip.relief))}</td></tr>
-          <tr><td>Taxable Income</td><td>${esc(formatN(slip.taxableIncome))}</td></tr>
-          <tr><td>Effective Tax Rate (Annual)</td><td>${esc(slip.effRatePct.toFixed(2) + "%")}</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="foot">
-      <span class="tag">TaxIQ</span>
-      <div style="margin-top:8px">
-        Notes: Period figures are derived by scaling annual values to the selected reporting period. If employment started mid-year or ended mid-year, a pro-rated tax computation mode may be required.
-      </div>
-    </div>
-
-    <div class="btns">
-      <button class="btn" onclick="window.print()">Print / Save as PDF</button>
-      <button class="btn" onclick="window.close()">Close</button>
+    <div class="box">
+      <div class="t">Tax Due (${esc(label)})</div>
+      <div class="v">${esc(formatN(ret.taxDue))}</div>
+      <div class="t" style="margin-top:6px">Credits/Paid: ${esc(formatN(ret.creditsWithheld))}</div>
     </div>
   </div>
+
+  <div class="row">
+    <table>
+      <thead><tr><th colspan="2">Summary</th></tr></thead>
+      <tbody>
+        ${rows.map(r=>`<tr><td>${esc(r.k)}</td><td>${esc(r.v)}</td></tr>`).join("")}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="row">
+    <table>
+      <thead><tr><th colspan="2">Breakdown (excerpt)</th></tr></thead>
+      <tbody>
+        ${bRows.length ? bRows.map(r=>`<tr><td>${esc(r.k)}</td><td>${esc(r.v)}</td></tr>`).join("") : `<tr><td colspan="2">No breakdown available.</td></tr>`}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="foot">
+    <span class="tag">TaxIQ</span>
+    <div style="margin-top:8px">Notes: This is a simplified computational summary for planning/recordkeeping. Regulatory treatment may vary by transaction, industry, and exemptions.</div>
+  </div>
+
+  <div class="btns">
+    <button class="btn" onclick="window.print()">Print / Save as PDF</button>
+    <button class="btn" onclick="window.close()">Close</button>
+  </div>
+</div>
 </body>
 </html>`;
     }
@@ -1286,91 +1009,21 @@ ${slip.userLabel ? esc("Label: " + slip.userLabel) : ""}</div>
       const w = window.open("", "_blank");
       if (!w){
         setStatus("Popup blocked", "bad");
-        rawOut.textContent = JSON.stringify({ error: "Popup blocked by browser. Please allow popups for this site." }, null, 2);
+        rawOut.textContent = JSON.stringify({ error: "Popup blocked by browser. Allow popups for print slip." }, null, 2);
         return;
       }
-      w.document.open();
-      w.document.write(html);
-      w.document.close();
-      w.focus();
+      w.document.open(); w.document.write(html); w.document.close(); w.focus();
     }
 
-    function currentSlipObject(userLabel=""){
-      if (!lastResult) return null;
-
-      const d = computeDerived(lastResult);
-      const label = periodLabel();
-      const mode = isAdvancedMode() ? "Advanced deductions" : "Simple deductions";
-
-      const basePay = parseMoney(basePayEl.value);
-      const baseFreq = baseFreqEl.value;
-
-      const bal = d.balance;
-      const balanceAbs = Math.abs(bal);
-
-      let reconTitle = "Settled";
-      if (balanceAbs >= 0.5) reconTitle = bal > 0 ? "Balance Payable" : "Overpaid (Refund)";
-
-      const iso = nowISO();
-
-      return {
-        id: crypto?.randomUUID ? crypto.randomUUID() : ("slip_" + Math.random().toString(16).slice(2)),
-        createdAt: iso,
-        createdHuman: humanTS(iso),
-        generatedHuman: humanTS(iso),
-        userLabel: (userLabel || "").trim(),
-        reportingPeriod: reportPeriodEl.value,
-        reportingPeriodLabel: label,
-        mode,
-        basePay,
-        baseFreq,
-        withheld: d.withheld,
-        grossPeriod: d.grossPeriod,
-        payePeriod: d.payePeriod,
-        netPeriod: d.netPeriod,
-        balanceAbs,
-        reconTitle,
-
-        // annual reference
-        grossAnnual: d.grossAnnual,
-        payeAnnual: d.payeAnnual,
-        annualIncome: d.annualIncome,
-        relief: d.relief,
-        taxableIncome: d.taxableIncome,
-        effRatePct: (d.effRate * 100),
-
-        // for traceability
-        inputsSnapshot: {
-          payload: lastPayload,
-          withheld: d.withheld,
-          reportPeriod: reportPeriodEl.value
-        }
-      };
-    }
-
-    function printCurrentSlip(){
-      const slip = currentSlipObject("");
-      if (!slip){
-        setStatus("Compute first", "bad");
-        rawOut.textContent = JSON.stringify({ error: "Please compute PAYE before printing." }, null, 2);
-        return;
-      }
-      const html = buildSlipHTML(slip);
-      openPrintWindow(html);
-    }
-
-    // -------- Saved Slips (History) --------
+    // ---------- Saved slips (generic) ----------
     function readSlips(){
       try{
         const raw = localStorage.getItem(SLIPS_KEY);
         if (!raw) return [];
         const arr = JSON.parse(raw);
         return Array.isArray(arr) ? arr : [];
-      } catch {
-        return [];
-      }
+      } catch { return []; }
     }
-
     function writeSlips(arr){
       const safe = Array.isArray(arr) ? arr.slice(0, MAX_SLIPS) : [];
       localStorage.setItem(SLIPS_KEY, JSON.stringify(safe));
@@ -1381,10 +1034,9 @@ ${slip.userLabel ? esc("Label: " + slip.userLabel) : ""}</div>
       slipCountPill.textContent = String(slips.length);
       histHint.textContent = slips.length
         ? "Saved slips are stored on this device (LocalStorage)."
-        : "No saved slips yet. Compute PAYE, then click Save Slip.";
+        : "No saved slips yet. Compute, then click Save Slip.";
 
       historyList.innerHTML = "";
-
       if (!slips.length){
         const empty = document.createElement("div");
         empty.className = "histRow";
@@ -1393,18 +1045,16 @@ ${slip.userLabel ? esc("Label: " + slip.userLabel) : ""}</div>
         return;
       }
 
-      // newest first
       const sorted = slips.slice().sort((a,b)=> String(b.createdAt).localeCompare(String(a.createdAt)));
-
       for (const s of sorted){
         const row = document.createElement("div");
         row.className = "histRow";
 
         const title = (s.userLabel && s.userLabel.trim())
           ? s.userLabel.trim()
-          : `${s.reportingPeriodLabel || "Period"} Slip`;
+          : `${s.module || "Tax"} • ${s.periodLabel || ""} Slip`;
 
-        const sub = `${humanTS(s.createdAt)} • ${s.reportingPeriodLabel || ""} • ${s.mode || ""} • PAYE ${formatN(s.payePeriod)} • Net ${formatN(s.netPeriod)}`;
+        const sub = `${humanTS(s.createdAt)} • ${s.module} • ${s.periodLabel} • Due ${formatN(s.taxDue)} • Balance ${formatN(Math.abs(Number(s.balance||0)))}`;
 
         const left = document.createElement("div");
         left.className = "histMeta";
@@ -1417,7 +1067,7 @@ ${slip.userLabel ? esc("Label: " + slip.userLabel) : ""}</div>
         bView.className = "secondary small";
         bView.textContent = "View/Print";
         bView.addEventListener("click", ()=>{
-          const html = buildSlipHTML(s);
+          const html = buildSlipHTML(s.returnObj, s.userLabel || "");
           openPrintWindow(html);
         });
 
@@ -1441,29 +1091,31 @@ ${slip.userLabel ? esc("Label: " + slip.userLabel) : ""}</div>
     }
 
     function saveSlip(){
-      const label = prompt("Optional label for this slip (e.g., Jan 2026 PAYE):", "");
-      const slip = currentSlipObject(label || "");
-      if (!slip){
+      if (!lastReturn){
         setStatus("Compute first", "bad");
-        rawOut.textContent = JSON.stringify({ error: "Compute PAYE before saving a slip." }, null, 2);
+        rawOut.textContent = JSON.stringify({ error: "Compute before saving a slip." }, null, 2);
         return;
       }
+      const label = prompt("Optional label (e.g., Jan 2026 VAT):", "") || "";
+      const iso = nowISO();
+      const obj = {
+        id: crypto?.randomUUID ? crypto.randomUUID() : ("slip_" + Math.random().toString(16).slice(2)),
+        createdAt: iso,
+        module: lastReturn.meta.module,
+        period: lastReturn.meta.period,
+        periodLabel: lastReturn.meta.periodLabel,
+        userLabel: label.trim(),
+        taxDue: Number(lastReturn.taxDue || 0),
+        balance: Number(lastReturn.balancePayableOrRefund || 0),
+        returnObj: lastReturn
+      };
 
       const existing = readSlips();
-
-      // keep newest at top; de-dupe by same timestamp+period+gross+paye
-      const signature = `${slip.createdAt}|${slip.reportingPeriod}|${Math.round(slip.grossPeriod)}|${Math.round(slip.payePeriod)}`;
-      const kept = existing.filter(x => {
-        const sig2 = `${x.createdAt}|${x.reportingPeriod}|${Math.round(x.grossPeriod||0)}|${Math.round(x.payePeriod||0)}`;
-        return sig2 !== signature;
-      });
-
-      const next = [slip, ...kept].slice(0, MAX_SLIPS);
+      const next = [obj, ...existing].slice(0, MAX_SLIPS);
       writeSlips(next);
-
       renderHistory();
       setStatus("Slip saved", "ok");
-      rawOut.textContent = JSON.stringify({ slipSaved:true, id: slip.id, label: slip.userLabel || null, at: slip.createdAt }, null, 2);
+      rawOut.textContent = JSON.stringify({ slipSaved:true, id: obj.id, module: obj.module, at: obj.createdAt }, null, 2);
     }
 
     function clearAllSlips(){
@@ -1471,97 +1123,84 @@ ${slip.userLabel ? esc("Label: " + slip.userLabel) : ""}</div>
       if (!ok) return;
       localStorage.removeItem(SLIPS_KEY);
       renderHistory();
-      rawOut.textContent = JSON.stringify({ slipsCleared:true }, null, 2);
       setStatus("Cleared slips", "ok");
+      rawOut.textContent = JSON.stringify({ slipsCleared:true }, null, 2);
     }
 
     // ---------- Copy/Export ----------
     function buildSummaryText(){
-      if (!lastResult) return "No result computed yet.";
-
-      const d = computeDerived(lastResult);
-      const label = periodLabel();
-      const mode = isAdvancedMode() ? "Advanced deductions" : "Simple deductions";
-
-      const basePay = parseMoney(basePayEl.value);
-      const baseFreq = baseFreqEl.value;
-
-      const bal = d.balance;
-      const absBal = Math.abs(bal);
-      const reconLine =
-        absBal < 0.5 ? "Reconciliation: Settled" :
-        bal > 0 ? `Balance Payable: ₦${formatMoney(Math.round(absBal))}` :
-                  `Overpaid (Refund): ₦${formatMoney(Math.round(absBal))}`;
+      if (!lastReturn) return "No computation yet.";
+      const m = lastReturn.meta || {};
+      const label = m.periodLabel || periodLabel();
+      const bal = Number(lastReturn.balancePayableOrRefund || 0);
+      const abs = Math.abs(bal);
+      const recon =
+        abs < 0.5 ? "Settled" :
+        bal > 0 ? "Balance Payable" :
+        "Credit / Overpaid";
 
       return [
-        "TaxIQ — PAYE Period-End Summary (Nigeria)",
+        `TaxIQ — ${m.module} Summary (Nigeria)`,
         "-----------------------------------------",
         `Timestamp: ${humanTS()}`,
+        `Taxpayer Type: ${m.taxpayerType || ""}`,
+        `State: ${m.state || ""}`,
         `Reporting Period: ${label}`,
-        `Mode: ${mode}`,
-        `Base Pay: ₦${formatMoney(basePay)} (${baseFreq})`,
         "",
-        `Gross per ${label}: ₦${formatMoney(Math.round(d.grossPeriod))}`,
-        `PAYE per ${label}: ₦${formatMoney(Math.round(d.payePeriod))}`,
-        `Net per ${label}: ₦${formatMoney(Math.round(d.netPeriod))}`,
+        `Gross Base (${label}): ${formatN(lastReturn.grossBase)}`,
+        `Tax Due (${label}): ${formatN(lastReturn.taxDue)}`,
+        `Credits/Paid (${label}): ${formatN(lastReturn.creditsWithheld)}`,
+        `Balance Payable/Credit: ${formatN(abs)} (${recon})`,
         "",
-        `Tax Withheld (this ${label}): ₦${formatMoney(Math.round(d.withheld))}`,
-        reconLine,
-        "",
-        `Annual PAYE: ₦${formatMoney(Math.round(d.payeAnnual))}`,
-        `Annual Gross: ₦${formatMoney(Math.round(d.grossAnnual))}`,
-        `Annual Income (after deductions): ₦${formatMoney(Math.round(d.annualIncome || 0))}`,
-        `Relief Applied: ₦${formatMoney(Math.round(d.relief || 0))}`,
-        `Taxable Income: ₦${formatMoney(Math.round(d.taxableIncome || 0))}`,
-        `Effective Tax Rate (Annual): ${(d.effRate*100).toFixed(2)}%`,
+        "Breakdown:",
+        ...(Array.isArray(lastReturn.breakdown) ? lastReturn.breakdown.slice(0,10).map(x => `- ${x.label}: ${typeof x.value === "number" ? (x.label.includes("Rate") ? x.value : formatN(x.value)) : x.value}`) : []),
         "",
         "Generated by TaxIQ."
       ].join("\n");
     }
 
     async function copySummary(){
-      const txt = buildSummaryText();
       try{
-        await navigator.clipboard.writeText(txt);
-        copyHint.textContent = "Summary copied to clipboard.";
+        await navigator.clipboard.writeText(buildSummaryText());
+        copyHint.textContent = "Summary copied.";
       } catch {
-        copyHint.textContent = "Copy failed (browser blocked clipboard).";
+        copyHint.textContent = "Copy failed.";
       }
     }
 
-    function downloadJSON(){
+    function exportJSON(){
       const exportObj = {
-        meta: { app:"TaxIQ", module:"PAYE", exportedAt: new Date().toISOString() },
-        reportingPeriod: reportPeriodEl.value,
-        withheld: parseMoney(taxWithheldEl.value),
-        autoSave: !!autoSaveEl.checked,
-        input: lastPayload,
-        result: lastResult
+        meta: { app:"TaxIQ", version:"v0.4.0", exportedAt: nowISO() },
+        module: activeModule,
+        header: {
+          taxpayerType: taxpayerTypeEl.value,
+          state: taxStateEl.value || "",
+          period: globalPeriodEl.value
+        },
+        inputs: lastInputs,
+        taxReturn: lastReturn
       };
       const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type:"application/json" });
       const url = URL.createObjectURL(blob);
-
       const a = document.createElement("a");
       a.href = url;
-      a.download = "taxiq_paye_export.json";
+      a.download = `taxiq_${String(activeModule).toLowerCase()}_export.json`;
       document.body.appendChild(a);
-      a.click();
-      a.remove();
-
+      a.click(); a.remove();
       URL.revokeObjectURL(url);
       copyHint.textContent = "JSON downloaded.";
     }
 
-    // -------- Persistence (Session Save/Load) ----------
-    function hasSaved(){ return !!localStorage.getItem(STORAGE_KEY); }
+    // ---------- Session Save/Load (v0.4.0) ----------
+    function hasSession(){ return !!localStorage.getItem(SESSION_KEY); }
 
-    function refreshSaveHint(){
-      if (!hasSaved()){
+    function refreshSessionHint(){
+      if (!hasSession()){
         saveHint.textContent = "No saved session detected.";
         return;
       }
       try{
-        const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        const parsed = JSON.parse(localStorage.getItem(SESSION_KEY));
         const ts = parsed?.meta?.savedAt || "";
         saveHint.textContent = ts ? `Saved session found (${ts}).` : "Saved session found.";
       } catch {
@@ -1569,184 +1208,158 @@ ${slip.userLabel ? esc("Label: " + slip.userLabel) : ""}</div>
       }
     }
 
-    function getState(){
-      const allowanceRows = Array.from(allowBody.querySelectorAll("tr")).map(tr => tr._get());
-      const deductionRows = Array.from(dedBody.querySelectorAll("tr")).map(tr => tr._get());
+    function getSessionState(){
+      const allowRows = Array.from(allowBody.querySelectorAll("tr")).map(tr => tr._get());
 
       return {
-        meta: { version:"v0.3.3", savedAt: nowISO() },
-        base: { pay: parseMoney(basePayEl.value), freq: baseFreqEl.value },
-        mode: { deductions: isAdvancedMode() ? "advanced" : "simple", advOpen: !!advDeds.open },
-        allowances: allowanceRows,
-        advancedDeductions: { pensionPct: parseMoney(pensionPctEl.value) || 8, rows: deductionRows },
-        simpleDeductions: { monthly: parseMoney(monthlyDedsEl.value) },
-        reporting: { period: reportPeriodEl.value, withheld: parseMoney(taxWithheldEl.value) },
+        meta: { version:"v0.4.0", savedAt: nowISO() },
+        activeModule,
+        header: {
+          taxpayerType: taxpayerTypeEl.value,
+          state: taxStateEl.value || "",
+          period: globalPeriodEl.value
+        },
+        paye: {
+          basePay: parseMoney(basePayEl.value),
+          baseFreq: baseFreqEl.value,
+          allowances: allowRows,
+          monthlyDeds: parseMoney(monthlyDedsEl.value),
+          withheld: parseMoney(payeWithheldEl.value)
+        },
+        vat: {
+          rateSel: vatRateEl.value,
+          rateCustomPct: parseMoney(vatRateCustomEl.value),
+          sales: parseMoney(vatSalesEl.value),
+          purchases: parseMoney(vatPurchasesEl.value),
+          inputAllowed: vatInputAllowedEl.value,
+          paid: parseMoney(vatPaidEl.value)
+        },
         ui: { autoSave: !!autoSaveEl.checked }
       };
     }
 
-    function setState(state){
-      if (!state || typeof state !== "object") throw new Error("Invalid saved state.");
+    function setSessionState(s){
+      if (!s || typeof s !== "object") throw new Error("Invalid session.");
 
-      const bp = Number(state?.base?.pay || 0);
-      basePayEl.value = bp ? formatMoney(Math.round(bp)) : "";
-      baseFreqEl.value = state?.base?.freq === "monthly" ? "monthly" : "annual";
+      // header
+      taxpayerTypeEl.value = s?.header?.taxpayerType || "individual";
+      taxStateEl.value = s?.header?.state || "";
+      globalPeriodEl.value = s?.header?.period || "monthly";
 
-      const rp = state?.reporting?.period;
-      reportPeriodEl.value = (rp === "quarterly" || rp === "annual" || rp === "monthly") ? rp : "monthly";
-      const wh = Number(state?.reporting?.withheld || 0);
-      taxWithheldEl.value = wh ? formatMoney(Math.round(wh)) : "";
-
-      const mode = state?.mode?.deductions === "advanced" ? "advanced" : "simple";
-      dedModeAdv.checked = (mode === "advanced");
-      dedModeSimple.checked = (mode !== "advanced");
-      advDeds.open = (mode === "advanced") ? true : !!state?.mode?.advOpen;
-
-      autoSaveEl.checked = !!state?.ui?.autoSave;
+      // PAYE
+      basePayEl.value = s?.paye?.basePay ? formatMoney(s.paye.basePay) : "";
+      baseFreqEl.value = s?.paye?.baseFreq === "monthly" ? "monthly" : "annual";
+      monthlyDedsEl.value = s?.paye?.monthlyDeds ? formatMoney(s.paye.monthlyDeds) : "";
+      annualDedsEl.value = s?.paye?.monthlyDeds ? formatMoney(s.paye.monthlyDeds * 12) : "";
+      payeWithheldEl.value = s?.paye?.withheld ? formatMoney(s.paye.withheld) : "";
 
       allowBody.innerHTML = "";
-      const aRows = Array.isArray(state?.allowances) ? state.allowances : [];
-      if (aRows.length){
-        for (const r of aRows){
+      const a = Array.isArray(s?.paye?.allowances) ? s.paye.allowances : [];
+      if (a.length){
+        for (const r of a){
           allowBody.appendChild(makeAllowanceRow({
             name: r?.name || "",
-            amount: (r?.amount ? formatMoney(Math.round(r.amount)) : ""),
+            amount: r?.amount ? formatMoney(r.amount) : "",
             frequency: FREQ.includes(r?.frequency) ? r.frequency : "monthly",
             taxable: (r?.taxable !== false)
           }));
         }
       } else {
-        seedAllowanceRows();
+        seedPaye();
       }
 
-      const pct = Number(state?.advancedDeductions?.pensionPct || 8);
-      pensionPctEl.value = formatMoney(Math.round(pct));
+      // VAT
+      vatRateEl.value = s?.vat?.rateSel || "0.075";
+      vatRateCustomEl.value = s?.vat?.rateCustomPct ? formatMoney(s.vat.rateCustomPct) : "";
+      vatSalesEl.value = s?.vat?.sales ? formatMoney(s.vat.sales) : "";
+      vatPurchasesEl.value = s?.vat?.purchases ? formatMoney(s.vat.purchases) : "";
+      vatInputAllowedEl.value = s?.vat?.inputAllowed || "yes";
+      vatPaidEl.value = s?.vat?.paid ? formatMoney(s.vat.paid) : "";
 
-      dedBody.innerHTML = "";
-      const dRows = Array.isArray(state?.advancedDeductions?.rows) ? state.advancedDeductions.rows : [];
-      if (dRows.length){
-        for (const r of dRows){
-          dedBody.appendChild(makeDeductionRow({
-            name: r?.name || "",
-            amount: (r?.amount ? formatMoney(Math.round(r.amount)) : ""),
-            frequency: FREQ.includes(r?.frequency) ? r.frequency : "monthly"
-          }));
-        }
-      } else {
-        seedDeductionRows();
-      }
+      autoSaveEl.checked = !!s?.ui?.autoSave;
 
-      const s = Number(state?.simpleDeductions?.monthly || 0);
-      monthlyDedsEl.value = s ? formatMoney(Math.round(s)) : "";
-
-      recalcAllowanceTotals();
-      recalcDeductionTotals();
-      applyModeUI();
-      updateAnnualDeds();
-      renderPeriodAndRecon();
+      setModule(s?.activeModule || "PAYE");
+      refreshSessionHint();
     }
 
     function saveSession(){
-      const state = getState();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      refreshSaveHint();
-      rawOut.textContent = JSON.stringify({ saved:true, key: STORAGE_KEY, at: state.meta.savedAt, reporting: state.reporting }, null, 2);
+      const st = getSessionState();
+      localStorage.setItem(SESSION_KEY, JSON.stringify(st));
+      refreshSessionHint();
+      rawOut.textContent = JSON.stringify({ saved:true, key: SESSION_KEY, at: st.meta.savedAt }, null, 2);
       setStatus("Saved", "ok");
     }
 
     function loadSession(){
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(SESSION_KEY);
       if (!raw) throw new Error("No saved session found.");
       const parsed = JSON.parse(raw);
-      setState(parsed);
-      refreshSaveHint();
-      rawOut.textContent = JSON.stringify({ loaded:true, key: STORAGE_KEY, savedAt: parsed?.meta?.savedAt || null, reporting: parsed?.reporting || null }, null, 2);
+      setSessionState(parsed);
+      rawOut.textContent = JSON.stringify({ loaded:true, key: SESSION_KEY, savedAt: parsed?.meta?.savedAt || null }, null, 2);
       setStatus("Loaded", "ok");
     }
 
-    function clearSaved(){
-      localStorage.removeItem(STORAGE_KEY);
-      refreshSaveHint();
-      rawOut.textContent = JSON.stringify({ cleared:true, key: STORAGE_KEY }, null, 2);
+    function clearSession(){
+      localStorage.removeItem(SESSION_KEY);
+      refreshSessionHint();
+      rawOut.textContent = JSON.stringify({ cleared:true, key: SESSION_KEY }, null, 2);
       setStatus("Cleared", "ok");
     }
 
-    // ---------- Events ----------
-    attachMoneyFormatting(basePayEl);
-    attachMoneyFormatting(monthlyDedsEl);
-    attachMoneyFormatting(pensionPctEl);
-    attachMoneyFormatting(taxWithheldEl);
+    // ---------- Compute dispatcher ----------
+    function computeActive(){
+      if (activeModule === "PAYE") return computePAYE();
+      if (activeModule === "VAT") return computeVAT();
+      if (activeModule === "WHT") throw new Error("WHT module not yet implemented in v0.4.0.");
+      if (activeModule === "CIT") throw new Error("CIT module not yet implemented in v0.4.0.");
+      throw new Error("Unknown module.");
+    }
 
-    monthlyDedsEl.addEventListener("input", ()=>{ updateAnnualDeds(); renderPeriodAndRecon(); });
+    function clearAllOutputs(){
+      clearKPIs();
+      setReconBadge(null);
+      rawOut.textContent = "{}";
+      copyHint.textContent = "—";
+      lastReturn = null;
+      lastInputs = null;
+    }
 
-    basePayEl.addEventListener("input", ()=>{ recalcDeductionTotals(); renderPeriodAndRecon(); });
-    baseFreqEl.addEventListener("change", ()=>{ recalcDeductionTotals(); renderPeriodAndRecon(); });
-    pensionPctEl.addEventListener("input", ()=>{ recalcDeductionTotals(); renderPeriodAndRecon(); });
+    // ---------- event wiring ----------
+    // module chips highlight when clicked
+    function syncChipActive(){
+      chipPaye.classList.toggle("active", activeModule==="PAYE");
+      chipVat.classList.toggle("active", activeModule==="VAT");
+      chipWht.classList.toggle("active", activeModule==="WHT");
+      chipCit.classList.toggle("active", activeModule==="CIT");
+    }
 
-    dedModeSimple.addEventListener("change", ()=>{ applyModeUI(); renderPeriodAndRecon(); });
-    dedModeAdv.addEventListener("change", ()=>{ applyModeUI(); renderPeriodAndRecon(); });
-
-    advDeds.addEventListener("toggle", ()=>{
-      if (isAdvancedMode() && !advDeds.open) advDeds.open = true;
+    [chipPaye, chipVat, chipWht, chipCit].forEach(ch=>{
+      ch.addEventListener("click", ()=> setTimeout(syncChipActive, 0));
     });
 
-    reportPeriodEl.addEventListener("change", ()=>renderPeriodAndRecon());
+    // money formatting
+    [basePayEl, monthlyDedsEl, payeWithheldEl, vatRateCustomEl, vatSalesEl, vatPurchasesEl, vatPaidEl].forEach(el => attachMoneyFormatting(el));
 
-    taxWithheldEl.addEventListener("input", ()=>{
-      formatInputWithCommas(taxWithheldEl);
-      renderPeriodAndRecon();
+    monthlyDedsEl.addEventListener("input", ()=>{
+      const m = parseMoney(monthlyDedsEl.value);
+      annualDedsEl.value = m ? formatMoney(m*12) : "";
     });
 
     btnAddRow.addEventListener("click", ()=>{
       allowBody.appendChild(makeAllowanceRow({ name:"", frequency:"monthly", taxable:true }));
-      recalcAllowanceTotals();
-      renderPeriodAndRecon();
     });
 
-    btnAddDed.addEventListener("click", ()=>{
-      dedBody.appendChild(makeDeductionRow({ name:"", frequency:"monthly" }));
-      recalcDeductionTotals();
-      renderPeriodAndRecon();
-    });
-
-    btnCopy.addEventListener("click", ()=>copySummary());
-    btnDownload.addEventListener("click", ()=>downloadJSON());
-    btnPrint.addEventListener("click", ()=>printCurrentSlip());
-    btnSaveSlip.addEventListener("click", ()=>saveSlip());
-    btnClearSlips.addEventListener("click", ()=>clearAllSlips());
-
-    btnSave.addEventListener("click", ()=>{
-      try{ saveSession(); } catch(e){
-        setStatus("Save failed", "bad");
-        rawOut.textContent = JSON.stringify({ error: String(e?.message || e) }, null, 2);
-      }
-    });
-
-    btnLoad.addEventListener("click", ()=>{
-      try{ loadSession(); } catch(e){
-        setStatus("Load failed", "bad");
-        rawOut.textContent = JSON.stringify({ error: String(e?.message || e) }, null, 2);
-      }
-    });
-
-    btnClearSaved.addEventListener("click", ()=>{
-      try{ clearSaved(); } catch(e){
-        setStatus("Clear failed", "bad");
-        rawOut.textContent = JSON.stringify({ error: String(e?.message || e) }, null, 2);
-      }
-    });
-
-    btnCalc.addEventListener("click", ()=>{
+    btnCompute.addEventListener("click", ()=>{
       try{
         setStatus("Computing…");
-        validate();
+        clearAllOutputs();
 
-        lastPayload = getPayload();
-        const result = runPAYE(lastPayload);
-        render(result);
+        const { taxReturn, inputs } = computeActive();
+        lastReturn = taxReturn;
+        lastInputs = inputs;
 
+        renderReturn(taxReturn);
         setStatus("Done", "ok");
-        copyHint.textContent = "—";
 
         if (autoSaveEl.checked){
           saveSession();
@@ -1759,61 +1372,177 @@ ${slip.userLabel ? esc("Label: " + slip.userLabel) : ""}</div>
     });
 
     btnReset.addEventListener("click", ()=>{
+      // header
+      taxpayerTypeEl.value = "individual";
+      taxStateEl.value = "";
+      globalPeriodEl.value = "monthly";
+
+      // PAYE
       basePayEl.value = "";
       baseFreqEl.value = "annual";
-
-      dedModeSimple.checked = true;
-      dedModeAdv.checked = false;
-      advDeds.open = false;
-
-      monthlyDedsEl.readOnly = false;
       monthlyDedsEl.value = "";
       annualDedsEl.value = "";
+      payeWithheldEl.value = "";
+      seedPaye();
 
-      pensionPctEl.value = "8";
-      pensionMonthlyEl.value = "";
+      // VAT
+      vatRateEl.value = "0.075";
+      vatRateCustomEl.value = "";
+      vatSalesEl.value = "";
+      vatPurchasesEl.value = "";
+      vatInputAllowedEl.value = "yes";
+      vatPaidEl.value = "";
 
-      reportPeriodEl.value = "monthly";
-      taxWithheldEl.value = "";
-
-      seedAllowanceRows();
-      seedDeductionRows();
-
-      lastResult = null;
-      lastPayload = null;
-
-      rawOut.textContent = "{}";
-      copyHint.textContent = "—";
+      clearAllOutputs();
       setStatus("Ready");
-
-      clearOutputCards();
-      recalcAllowanceTotals();
-      recalcDeductionTotals();
-      applyModeUI();
-      updateAnnualDeds();
-      renderPeriodAndRecon();
     });
 
-    // Init
-    seedAllowanceRows();
-    seedDeductionRows();
-    setStatus("Ready");
-    recalcAllowanceTotals();
-    recalcDeductionTotals();
-    applyModeUI();
-    updateAnnualDeds();
-    clearOutputCards();
-    refreshSaveHint();
-    renderHistory();
+    btnCopy.addEventListener("click", ()=>copySummary());
+    btnExport.addEventListener("click", ()=>exportJSON());
 
-    // Auto-load session if saved exists and basePay empty
+    btnPrint.addEventListener("click", ()=>{
+      if (!lastReturn){
+        setStatus("Compute first", "bad");
+        rawOut.textContent = JSON.stringify({ error: "Compute before printing a slip." }, null, 2);
+        return;
+      }
+      const html = buildSlipHTML(lastReturn, "");
+      openPrintWindow(html);
+    });
+
+    btnSaveSlip.addEventListener("click", ()=>saveSlip());
+    btnClearSlips.addEventListener("click", ()=>clearAllSlips());
+
+    btnSaveSession.addEventListener("click", ()=>{ try{ saveSession(); } catch(e){ setStatus("Save failed","bad"); rawOut.textContent = JSON.stringify({error:String(e.message||e)},null,2); }});
+    btnLoadSession.addEventListener("click", ()=>{ try{ loadSession(); } catch(e){ setStatus("Load failed","bad"); rawOut.textContent = JSON.stringify({error:String(e.message||e)},null,2); }});
+    btnClearSession.addEventListener("click", ()=>{ try{ clearSession(); } catch(e){ setStatus("Clear failed","bad"); rawOut.textContent = JSON.stringify({error:String(e.message||e)},null,2); }});
+
+    // slips store structure (v2)
+    function saveSlip(){
+      if (!lastReturn){
+        setStatus("Compute first", "bad");
+        rawOut.textContent = JSON.stringify({ error: "Compute before saving a slip." }, null, 2);
+        return;
+      }
+      const label = prompt("Optional label (e.g., Jan 2026 VAT):", "") || "";
+      const iso = nowISO();
+      const obj = {
+        id: crypto?.randomUUID ? crypto.randomUUID() : ("slip_" + Math.random().toString(16).slice(2)),
+        createdAt: iso,
+        module: lastReturn.meta.module,
+        period: lastReturn.meta.period,
+        periodLabel: lastReturn.meta.periodLabel,
+        userLabel: label.trim(),
+        taxDue: Number(lastReturn.taxDue || 0),
+        balance: Number(lastReturn.balancePayableOrRefund || 0),
+        returnObj: lastReturn
+      };
+      const existing = readSlips();
+      const next = [obj, ...existing].slice(0, MAX_SLIPS);
+      writeSlips(next);
+      renderHistory();
+      setStatus("Slip saved", "ok");
+      rawOut.textContent = JSON.stringify({ slipSaved:true, id: obj.id, module: obj.module, at: obj.createdAt }, null, 2);
+    }
+
+    function readSlips(){
+      try{
+        const raw = localStorage.getItem(SLIPS_KEY);
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr : [];
+      } catch { return []; }
+    }
+    function writeSlips(arr){
+      const safe = Array.isArray(arr) ? arr.slice(0, MAX_SLIPS) : [];
+      localStorage.setItem(SLIPS_KEY, JSON.stringify(safe));
+    }
+
+    function renderHistory(){
+      const slips = readSlips();
+      slipCountPill.textContent = String(slips.length);
+      histHint.textContent = slips.length
+        ? "Saved slips are stored on this device (LocalStorage)."
+        : "No saved slips yet. Compute, then click Save Slip.";
+
+      historyList.innerHTML = "";
+      if (!slips.length){
+        const empty = document.createElement("div");
+        empty.className = "histRow";
+        empty.innerHTML = `<div class="histMeta"><div class="histTitle">No slips saved</div><div class="histSub">Your saved slips will appear here.</div></div>`;
+        historyList.appendChild(empty);
+        return;
+      }
+
+      const sorted = slips.slice().sort((a,b)=> String(b.createdAt).localeCompare(String(a.createdAt)));
+      for (const s of sorted){
+        const row = document.createElement("div");
+        row.className = "histRow";
+
+        const title = (s.userLabel && s.userLabel.trim())
+          ? s.userLabel.trim()
+          : `${s.module || "Tax"} • ${s.periodLabel || ""} Slip`;
+
+        const sub = `${humanTS(s.createdAt)} • ${s.module} • ${s.periodLabel} • Due ${formatN(s.taxDue)} • Balance ${formatN(Math.abs(Number(s.balance||0)))}`;
+
+        const left = document.createElement("div");
+        left.className = "histMeta";
+        left.innerHTML = `<div class="histTitle">${esc(title)}</div><div class="histSub">${esc(sub)}</div>`;
+
+        const btns = document.createElement("div");
+        btns.className = "histBtns";
+
+        const bView = document.createElement("button");
+        bView.className = "secondary small";
+        bView.textContent = "View/Print";
+        bView.addEventListener("click", ()=>{
+          const html = buildSlipHTML(s.returnObj, s.userLabel || "");
+          openPrintWindow(html);
+        });
+
+        const bDel = document.createElement("button");
+        bDel.className = "secondary small";
+        bDel.textContent = "Delete";
+        bDel.addEventListener("click", ()=>{
+          const kept = readSlips().filter(x => x.id !== s.id);
+          writeSlips(kept);
+          renderHistory();
+          rawOut.textContent = JSON.stringify({ deleted:true, id:s.id }, null, 2);
+        });
+
+        btns.appendChild(bView);
+        btns.appendChild(bDel);
+
+        row.appendChild(left);
+        row.appendChild(btns);
+        historyList.appendChild(row);
+      }
+    }
+
+    function clearAllSlips(){
+      const ok = confirm("Clear all saved slips on this device?");
+      if (!ok) return;
+      localStorage.removeItem(SLIPS_KEY);
+      renderHistory();
+      setStatus("Cleared slips", "ok");
+      rawOut.textContent = JSON.stringify({ slipsCleared:true }, null, 2);
+    }
+
+    // init
+    seedPaye();
+    allowBody.appendChild(makeAllowanceRow({ name:"", frequency:"monthly", taxable:true }));
+    setModule("PAYE");
+    renderHistory();
+    refreshSessionHint();
+
+    // auto-load session if available
     try{
-      if (!basePayEl.value && hasSaved()){
+      if (hasSession()){
         loadSession();
       }
     } catch { /* ignore */ }
 
-    function hasSaved(){ return !!localStorage.getItem(STORAGE_KEY); }
+    function hasSession(){ return !!localStorage.getItem(SESSION_KEY); }
   </script>
 </body>
 </html>
