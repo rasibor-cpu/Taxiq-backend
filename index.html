@@ -196,6 +196,29 @@
     }
     .statusBadge.ok{color:var(--ok)}
     .statusBadge.bad{color:var(--danger)}
+
+    .toolbarline{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:10px;
+      padding-top:10px;
+      border-top:1px solid var(--line);
+    }
+    .toggle{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.02);
+      font-size:12px;
+      color:var(--muted);
+      user-select:none;
+    }
+    .toggle input{width:auto}
   </style>
 </head>
 
@@ -362,6 +385,19 @@ Author | Financial Strategy</div>
           <button id="btnCalc">Compute PAYE</button>
           <button class="secondary" id="btnReset">Reset</button>
         </div>
+
+        <div class="toolbarline">
+          <button class="secondary" id="btnSave">Save Session</button>
+          <button class="secondary" id="btnLoad">Load Saved</button>
+          <button class="secondary" id="btnClearSaved">Clear Saved</button>
+
+          <label class="toggle">
+            <input type="checkbox" id="autoSave" checked />
+            Auto-save on Compute
+          </label>
+
+          <span class="tiny" id="saveHint">No saved session detected.</span>
+        </div>
       </div>
 
       <!-- OUTPUTS -->
@@ -418,7 +454,7 @@ Author | Financial Strategy</div>
           <h2>Annual Reference (for audit) <span class="pill">Annual</span></h2>
           <div class="kpis" style="margin-top:0">
             <div class="kpi">
-              <div class="t">Annualized Gross (Base + Taxable Allowances)</div>
+              <div class="t">Annual Gross (Base + Taxable Allowances)</div>
               <div class="v" id="kpiGrossAnnual">—</div>
               <div class="s" id="kpiGrossAnnualSub">—</div>
             </div>
@@ -470,6 +506,8 @@ Author | Financial Strategy</div>
 
   <script type="module">
     import { runPAYE } from "./src/modules/paye/paye.js";
+
+    const STORAGE_KEY = "taxiq_paye_session_v2"; // v2 includes period + withheld
 
     const allowBody = document.getElementById("allowBody");
     const dedBody = document.getElementById("dedBody");
@@ -533,10 +571,18 @@ Author | Financial Strategy</div>
 
     const rawOut = document.getElementById("rawOut");
 
+    const btnSave = document.getElementById("btnSave");
+    const btnLoad = document.getElementById("btnLoad");
+    const btnClearSaved = document.getElementById("btnClearSaved");
+    const autoSaveEl = document.getElementById("autoSave");
+    const saveHint = document.getElementById("saveHint");
+
     const FREQ = ["monthly","quarterly","annual","one-off"];
 
     let lastResult = null;
     let lastPayload = null;
+
+    function nowISO(){ try { return new Date().toISOString(); } catch { return ""; } }
 
     function setStatus(text, state="ready"){
       statusPill.textContent = text;
@@ -664,7 +710,7 @@ Author | Financial Strategy</div>
         const ann = annualize(amt, sel.value);
         span.textContent = ann ? ("₦ " + formatMoney(ann)) : "—";
         recalcAllowanceTotals();
-        renderPeriodAndRecon(); // keep derived cards in sync
+        renderPeriodAndRecon();
       }
 
       attachMoneyFormatting(inAmt);
@@ -972,14 +1018,12 @@ Author | Financial Strategy</div>
 
       const d = computeDerived(result);
 
-      // Annual reference
       kpiGrossAnnual.textContent = "₦ " + formatMoney(Math.round(d.grossAnnual));
       kpiGrossAnnualSub.textContent = `Base + taxable allowances (annualized)`;
 
       kpiPayeAnnual.textContent = "₦ " + formatMoney(Math.round(d.payeAnnual));
       kpiPayeMonthly.textContent = `≈ ₦ ${formatMoney(Math.round(d.payeAnnual/12))} per month`;
 
-      // Transparency
       kpiAnnualIncome.textContent = d.annualIncome ? ("₦ " + formatMoney(Math.round(d.annualIncome))) : "—";
       kpiRelief.textContent = "₦ " + formatMoney(Math.round(d.relief || 0));
       kpiTaxableIncome.textContent = d.taxableIncome ? ("₦ " + formatMoney(Math.round(d.taxableIncome))) : "—";
@@ -987,7 +1031,6 @@ Author | Financial Strategy</div>
       const pct = (d.effRate * 100);
       kpiEffRate.textContent = (Number.isFinite(pct) ? pct.toFixed(2) : "0.00") + "%";
 
-      // Period cards + reconciliation
       renderPeriodAndRecon();
     }
 
@@ -1107,6 +1150,7 @@ Author | Financial Strategy</div>
         meta: { app:"TaxIQ", module:"PAYE", exportedAt: new Date().toISOString() },
         reportingPeriod: reportPeriodEl.value,
         withheld: parseMoney(taxWithheldEl.value),
+        autoSave: !!autoSaveEl.checked,
         input: lastPayload,
         result: lastResult
       };
@@ -1124,7 +1168,136 @@ Author | Financial Strategy</div>
       copyHint.textContent = "JSON downloaded.";
     }
 
-    // Wiring
+    // -------- Persistence (Save/Load) ----------
+    function hasSaved(){ return !!localStorage.getItem(STORAGE_KEY); }
+
+    function refreshSaveHint(){
+      if (!hasSaved()){
+        saveHint.textContent = "No saved session detected.";
+        return;
+      }
+      try{
+        const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        const ts = parsed?.meta?.savedAt || "";
+        saveHint.textContent = ts ? `Saved session found (${ts}).` : "Saved session found.";
+      } catch {
+        saveHint.textContent = "Saved session found (unreadable).";
+      }
+    }
+
+    function getState(){
+      const allowanceRows = Array.from(allowBody.querySelectorAll("tr")).map(tr => tr._get());
+      const deductionRows = Array.from(dedBody.querySelectorAll("tr")).map(tr => tr._get());
+
+      return {
+        meta: { version:"v0.3.0", savedAt: nowISO() },
+        base: { pay: parseMoney(basePayEl.value), freq: baseFreqEl.value },
+        mode: { deductions: isAdvancedMode() ? "advanced" : "simple", advOpen: !!advDeds.open },
+        allowances: allowanceRows,
+        advancedDeductions: { pensionPct: parseMoney(pensionPctEl.value) || 8, rows: deductionRows },
+        simpleDeductions: { monthly: parseMoney(monthlyDedsEl.value) },
+        reporting: { period: reportPeriodEl.value, withheld: parseMoney(taxWithheldEl.value) },
+        ui: { autoSave: !!autoSaveEl.checked }
+      };
+    }
+
+    function setState(state){
+      if (!state || typeof state !== "object") throw new Error("Invalid saved state.");
+
+      // base
+      const bp = Number(state?.base?.pay || 0);
+      basePayEl.value = bp ? formatMoney(Math.round(bp)) : "";
+      baseFreqEl.value = state?.base?.freq === "monthly" ? "monthly" : "annual";
+
+      // reporting period + withheld
+      const rp = state?.reporting?.period;
+      reportPeriodEl.value = (rp === "quarterly" || rp === "annual" || rp === "monthly") ? rp : "monthly";
+      const wh = Number(state?.reporting?.withheld || 0);
+      taxWithheldEl.value = wh ? formatMoney(Math.round(wh)) : "";
+
+      // mode
+      const mode = state?.mode?.deductions === "advanced" ? "advanced" : "simple";
+      dedModeAdv.checked = (mode === "advanced");
+      dedModeSimple.checked = (mode !== "advanced");
+      advDeds.open = (mode === "advanced") ? true : !!state?.mode?.advOpen;
+
+      // autoSave
+      autoSaveEl.checked = !!state?.ui?.autoSave;
+
+      // allowances
+      allowBody.innerHTML = "";
+      const aRows = Array.isArray(state?.allowances) ? state.allowances : [];
+      if (aRows.length){
+        for (const r of aRows){
+          allowBody.appendChild(makeAllowanceRow({
+            name: r?.name || "",
+            amount: (r?.amount ? formatMoney(Math.round(r.amount)) : ""),
+            frequency: FREQ.includes(r?.frequency) ? r.frequency : "monthly",
+            taxable: (r?.taxable !== false)
+          }));
+        }
+      } else {
+        seedAllowanceRows();
+      }
+
+      // deductions
+      const pct = Number(state?.advancedDeductions?.pensionPct || 8);
+      pensionPctEl.value = formatMoney(Math.round(pct));
+
+      dedBody.innerHTML = "";
+      const dRows = Array.isArray(state?.advancedDeductions?.rows) ? state.advancedDeductions.rows : [];
+      if (dRows.length){
+        for (const r of dRows){
+          dedBody.appendChild(makeDeductionRow({
+            name: r?.name || "",
+            amount: (r?.amount ? formatMoney(Math.round(r.amount)) : ""),
+            frequency: FREQ.includes(r?.frequency) ? r.frequency : "monthly"
+          }));
+        }
+      } else {
+        seedDeductionRows();
+      }
+
+      // simple deductions monthly
+      const s = Number(state?.simpleDeductions?.monthly || 0);
+      monthlyDedsEl.value = s ? formatMoney(Math.round(s)) : "";
+
+      // recompute + re-render cards (no auto compute)
+      recalcAllowanceTotals();
+      recalcDeductionTotals();
+      applyModeUI();
+      updateAnnualDeds();
+
+      // keep output cards but refresh reconciliation if there is a lastResult
+      renderPeriodAndRecon();
+    }
+
+    function saveSession(){
+      const state = getState();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      refreshSaveHint();
+      rawOut.textContent = JSON.stringify({ saved:true, key: STORAGE_KEY, at: state.meta.savedAt, reporting: state.reporting }, null, 2);
+      setStatus("Saved", "ok");
+    }
+
+    function loadSession(){
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) throw new Error("No saved session found.");
+      const parsed = JSON.parse(raw);
+      setState(parsed);
+      refreshSaveHint();
+      rawOut.textContent = JSON.stringify({ loaded:true, key: STORAGE_KEY, savedAt: parsed?.meta?.savedAt || null, reporting: parsed?.reporting || null }, null, 2);
+      setStatus("Loaded", "ok");
+    }
+
+    function clearSaved(){
+      localStorage.removeItem(STORAGE_KEY);
+      refreshSaveHint();
+      rawOut.textContent = JSON.stringify({ cleared:true, key: STORAGE_KEY }, null, 2);
+      setStatus("Cleared", "ok");
+    }
+
+    // ---------- Events ----------
     attachMoneyFormatting(basePayEl);
     attachMoneyFormatting(monthlyDedsEl);
     attachMoneyFormatting(pensionPctEl);
@@ -1165,6 +1338,27 @@ Author | Financial Strategy</div>
     btnCopy.addEventListener("click", ()=>copySummary());
     btnDownload.addEventListener("click", ()=>downloadJSON());
 
+    btnSave.addEventListener("click", ()=>{
+      try{ saveSession(); } catch(e){
+        setStatus("Save failed", "bad");
+        rawOut.textContent = JSON.stringify({ error: String(e?.message || e) }, null, 2);
+      }
+    });
+
+    btnLoad.addEventListener("click", ()=>{
+      try{ loadSession(); } catch(e){
+        setStatus("Load failed", "bad");
+        rawOut.textContent = JSON.stringify({ error: String(e?.message || e) }, null, 2);
+      }
+    });
+
+    btnClearSaved.addEventListener("click", ()=>{
+      try{ clearSaved(); } catch(e){
+        setStatus("Clear failed", "bad");
+        rawOut.textContent = JSON.stringify({ error: String(e?.message || e) }, null, 2);
+      }
+    });
+
     btnCalc.addEventListener("click", ()=>{
       try{
         setStatus("Computing…");
@@ -1176,6 +1370,11 @@ Author | Financial Strategy</div>
 
         setStatus("Done", "ok");
         copyHint.textContent = "—";
+
+        if (autoSaveEl.checked){
+          saveSession();
+          setStatus("Done + Saved", "ok");
+        }
       } catch(e){
         setStatus("Fix inputs", "bad");
         rawOut.textContent = JSON.stringify({ error: String(e?.message || e) }, null, 2);
@@ -1228,7 +1427,14 @@ Author | Financial Strategy</div>
     applyModeUI();
     updateAnnualDeds();
     clearOutputCards();
-    renderPeriodAndRecon();
+    refreshSaveHint();
+
+    // Auto-load if saved exists and basePay empty
+    try{
+      if (!basePayEl.value && hasSaved()){
+        loadSession();
+      }
+    } catch { /* ignore */ }
   </script>
 </body>
 </html>
