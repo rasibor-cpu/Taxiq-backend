@@ -162,28 +162,14 @@
     }
     .modebar input{width:auto}
 
-    .toolbarline{
+    .exports{
       display:flex;
       gap:10px;
       flex-wrap:wrap;
-      align-items:center;
-      margin-top:6px;
-      padding-top:8px;
+      margin-top:10px;
+      padding-top:10px;
       border-top:1px solid var(--line);
     }
-    .toggle{
-      display:inline-flex;
-      gap:8px;
-      align-items:center;
-      padding:8px 10px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.02);
-      font-size:12px;
-      color:var(--muted);
-      user-select:none;
-    }
-    .toggle input{width:auto}
   </style>
 </head>
 
@@ -194,7 +180,7 @@
         <h1>TaxIQ — Tax Calculator</h1>
         <div class="sub">
           PAYE module: annualized earnings profile = base pay + taxable allowances − annualized deductions.<br/>
-          All amount fields auto-format with commas and remain readable for large numbers.
+          Output focus: tax liability for the reporting period + net take-home indicators.
         </div>
       </div>
       <div class="sig">Robert Asibor
@@ -350,19 +336,6 @@ Author | Financial Strategy</div>
           <button id="btnCalc">Compute PAYE</button>
           <button class="secondary" id="btnReset">Reset</button>
         </div>
-
-        <div class="toolbarline">
-          <button class="secondary" id="btnSave">Save Session</button>
-          <button class="secondary" id="btnLoad">Load Saved</button>
-          <button class="secondary" id="btnClearSaved">Clear Saved</button>
-
-          <label class="toggle">
-            <input type="checkbox" id="autoSave" checked />
-            Auto-save on Compute
-          </label>
-
-          <span class="tiny" id="saveHint">No saved session detected.</span>
-        </div>
       </div>
 
       <!-- OUTPUTS -->
@@ -380,6 +353,48 @@ Author | Financial Strategy</div>
             <div class="v" id="kpiPayeAnnual">—</div>
             <div class="s" id="kpiPayeMonthly">—</div>
           </div>
+          <div class="kpi">
+            <div class="t">Net Pay (Annual)</div>
+            <div class="v" id="kpiNetAnnual">—</div>
+            <div class="s" id="kpiNetAnnualSub">—</div>
+          </div>
+          <div class="kpi">
+            <div class="t">Net Pay (Monthly)</div>
+            <div class="v" id="kpiNetMonthly">—</div>
+            <div class="s" id="kpiNetMonthlySub">—</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Reliefs & Taxable Income <span class="pill">Transparency</span></h2>
+          <div class="kpis" style="margin-top:0">
+            <div class="kpi">
+              <div class="t">Annual Income (after deductions)</div>
+              <div class="v" id="kpiAnnualIncome">—</div>
+              <div class="s" id="kpiAnnualIncomeSub">Gross − Deductions</div>
+            </div>
+            <div class="kpi">
+              <div class="t">Relief Applied</div>
+              <div class="v" id="kpiRelief">—</div>
+              <div class="s">CRA / relief used in computation</div>
+            </div>
+            <div class="kpi">
+              <div class="t">Taxable Income</div>
+              <div class="v" id="kpiTaxableIncome">—</div>
+              <div class="s">Annual income − relief</div>
+            </div>
+            <div class="kpi">
+              <div class="t">Effective Tax Rate</div>
+              <div class="v" id="kpiEffRate">—</div>
+              <div class="s">PAYE ÷ Gross</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="exports">
+          <button class="secondary" id="btnCopy">Copy Summary</button>
+          <button class="secondary" id="btnDownload">Download JSON</button>
+          <span class="tiny" id="copyHint">—</span>
         </div>
 
         <div class="tiny" style="margin-top:12px">Debug / Errors (always visible):</div>
@@ -390,8 +405,6 @@ Author | Financial Strategy</div>
 
   <script type="module">
     import { runPAYE } from "./src/modules/paye/paye.js";
-
-    const STORAGE_KEY = "taxiq_paye_session_v1";
 
     const allowBody = document.getElementById("allowBody");
     const dedBody = document.getElementById("dedBody");
@@ -427,19 +440,28 @@ Author | Financial Strategy</div>
     const kpiGrossBreak = document.getElementById("kpiGrossBreak");
     const kpiPayeAnnual = document.getElementById("kpiPayeAnnual");
     const kpiPayeMonthly = document.getElementById("kpiPayeMonthly");
-    const rawOut = document.getElementById("rawOut");
 
-    const btnSave = document.getElementById("btnSave");
-    const btnLoad = document.getElementById("btnLoad");
-    const btnClearSaved = document.getElementById("btnClearSaved");
-    const autoSaveEl = document.getElementById("autoSave");
-    const saveHint = document.getElementById("saveHint");
+    const kpiNetAnnual = document.getElementById("kpiNetAnnual");
+    const kpiNetAnnualSub = document.getElementById("kpiNetAnnualSub");
+    const kpiNetMonthly = document.getElementById("kpiNetMonthly");
+    const kpiNetMonthlySub = document.getElementById("kpiNetMonthlySub");
+
+    const kpiAnnualIncome = document.getElementById("kpiAnnualIncome");
+    const kpiAnnualIncomeSub = document.getElementById("kpiAnnualIncomeSub");
+    const kpiRelief = document.getElementById("kpiRelief");
+    const kpiTaxableIncome = document.getElementById("kpiTaxableIncome");
+    const kpiEffRate = document.getElementById("kpiEffRate");
+
+    const btnCopy = document.getElementById("btnCopy");
+    const btnDownload = document.getElementById("btnDownload");
+    const copyHint = document.getElementById("copyHint");
+
+    const rawOut = document.getElementById("rawOut");
 
     const FREQ = ["monthly","quarterly","annual","one-off"];
 
-    function nowISO(){
-      try { return new Date().toISOString(); } catch { return ""; }
-    }
+    let lastResult = null;
+    let lastPayload = null;
 
     function setStatus(text, state="ready"){
       statusPill.textContent = text;
@@ -755,12 +777,30 @@ Author | Financial Strategy</div>
       return null;
     }
 
+    function computeDerivedKPIs(result){
+      const gross = Number(result?.breakdown?.baseAnnual || 0) + Number(result?.breakdown?.allowancesAnnual || 0);
+      const paye = extractNum(result, ["paye","tax","taxPayable","annualTax"]) ?? 0;
+
+      const annualIncome = Number(result?.annualIncome ?? result?.breakdown?.annualIncome ?? 0);
+      const relief = Number(result?.relief ?? 0);
+      const taxableIncome = Number(result?.taxableIncome ?? 0);
+
+      const netAnnual = Math.max(0, gross - paye);
+      const netMonthly = netAnnual / 12;
+
+      const effRate = gross > 0 ? (paye / gross) : 0;
+
+      return { gross, paye, netAnnual, netMonthly, annualIncome, relief, taxableIncome, effRate };
+    }
+
     function render(result){
+      lastResult = result;
+
       rawOut.textContent = JSON.stringify(result, null, 2);
 
       const b = result?.breakdown;
       if (b){
-        const gross = (Number(b.baseAnnual)||0) + (Number(b.allowancesAnnual)||0);
+        const gross = b.baseAnnual + b.allowancesAnnual;
         kpiGross.textContent = "₦ " + formatMoney(gross);
         kpiGrossBreak.textContent =
           `Base: ₦${formatMoney(b.baseAnnual)} | Allowances: ₦${formatMoney(b.allowancesAnnual)} | Deductions: ₦${formatMoney(b.deductionsAnnual)}`;
@@ -777,6 +817,24 @@ Author | Financial Strategy</div>
         kpiPayeAnnual.textContent = "—";
         kpiPayeMonthly.textContent = "—";
       }
+
+      // Derived net + transparency
+      const d = computeDerivedKPIs(result);
+
+      kpiNetAnnual.textContent = "₦ " + formatMoney(Math.round(d.netAnnual));
+      kpiNetAnnualSub.textContent = `Gross ₦${formatMoney(Math.round(d.gross))} − PAYE ₦${formatMoney(Math.round(d.paye))}`;
+
+      kpiNetMonthly.textContent = "₦ " + formatMoney(Math.round(d.netMonthly));
+      kpiNetMonthlySub.textContent = `Net annual ÷ 12`;
+
+      kpiAnnualIncome.textContent = d.annualIncome ? ("₦ " + formatMoney(Math.round(d.annualIncome))) : "—";
+      kpiAnnualIncomeSub.textContent = "Gross − Deductions";
+
+      kpiRelief.textContent = ("₦ " + formatMoney(Math.round(d.relief || 0)));
+      kpiTaxableIncome.textContent = d.taxableIncome ? ("₦ " + formatMoney(Math.round(d.taxableIncome))) : "—";
+
+      const pct = (d.effRate * 100);
+      kpiEffRate.textContent = (Number.isFinite(pct) ? pct.toFixed(2) : "0.00") + "%";
     }
 
     function validate(){
@@ -795,145 +853,108 @@ Author | Financial Strategy</div>
       }
     }
 
-    // ---------- Save/Load ----------
-    function hasSaved(){
-      return !!localStorage.getItem(STORAGE_KEY);
-    }
-
-    function refreshSaveHint(){
-      if (!hasSaved()){
-        saveHint.textContent = "No saved session detected.";
-        return;
-      }
-      try{
-        const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        const ts = parsed?.meta?.savedAt || "";
-        saveHint.textContent = ts ? `Saved session found (${ts}).` : "Saved session found.";
-      } catch {
-        saveHint.textContent = "Saved session found (unreadable).";
-      }
-    }
-
-    function getState(){
-      const allowanceRows = Array.from(allowBody.querySelectorAll("tr")).map(tr => tr._get());
-      const deductionRows = Array.from(dedBody.querySelectorAll("tr")).map(tr => tr._get());
-
-      return {
-        meta: {
-          version: "v0.2.5",
-          savedAt: nowISO()
-        },
-        base: {
-          pay: parseMoney(basePayEl.value),
-          freq: baseFreqEl.value
-        },
-        mode: {
-          deductions: isAdvancedMode() ? "advanced" : "simple",
-          advOpen: !!advDeds.open
-        },
-        simpleDeductions: {
-          monthly: parseMoney(monthlyDedsEl.value)
-        },
-        advancedDeductions: {
-          pensionPct: parseMoney(pensionPctEl.value),
-          rows: deductionRows
-        },
-        allowances: allowanceRows,
-        ui: {
-          autoSave: !!autoSaveEl.checked
-        }
-      };
-    }
-
-    function setState(state){
-      if (!state || typeof state !== "object") throw new Error("Invalid saved state.");
-
-      // Base
-      const basePay = Number(state?.base?.pay || 0);
-      basePayEl.value = basePay ? formatMoney(Math.round(basePay)) : "";
-      baseFreqEl.value = state?.base?.freq === "monthly" ? "monthly" : "annual";
-
-      // Mode
-      const mode = state?.mode?.deductions === "advanced" ? "advanced" : "simple";
-      dedModeAdv.checked = (mode === "advanced");
-      dedModeSimple.checked = (mode !== "advanced");
-
-      // AutoSave
-      autoSaveEl.checked = !!state?.ui?.autoSave;
-
-      // Allowances
-      allowBody.innerHTML = "";
-      const aRows = Array.isArray(state?.allowances) ? state.allowances : [];
-      if (aRows.length){
-        for (const r of aRows){
-          allowBody.appendChild(makeAllowanceRow({
-            name: r?.name || "",
-            amount: (r?.amount ? formatMoney(Math.round(r.amount)) : ""),
-            frequency: FREQ.includes(r?.frequency) ? r.frequency : "monthly",
-            taxable: (r?.taxable !== false)
-          }));
-        }
-      } else {
-        seedAllowanceRows();
-      }
-
-      // Deductions
-      pensionPctEl.value = (state?.advancedDeductions?.pensionPct ? formatMoney(Math.round(state.advancedDeductions.pensionPct)) : "8");
-
-      dedBody.innerHTML = "";
-      const dRows = Array.isArray(state?.advancedDeductions?.rows) ? state.advancedDeductions.rows : [];
-      if (dRows.length){
-        for (const r of dRows){
-          dedBody.appendChild(makeDeductionRow({
-            name: r?.name || "",
-            amount: (r?.amount ? formatMoney(Math.round(r.amount)) : ""),
-            frequency: FREQ.includes(r?.frequency) ? r.frequency : "monthly"
-          }));
-        }
-      } else {
-        seedDeductionRows();
-      }
-
-      // Simple deductions monthly
-      const simpleMonthly = Number(state?.simpleDeductions?.monthly || 0);
-      monthlyDedsEl.value = simpleMonthly ? formatMoney(Math.round(simpleMonthly)) : "";
-
-      // Expand/collapse advanced panel as stored
-      advDeds.open = (mode === "advanced") ? true : !!state?.mode?.advOpen;
-
-      // Recompute totals + mode effects
+    function getPayload(){
       recalcAllowanceTotals();
-      recalcDeductionTotals();
       applyModeUI();
-      updateAnnualDeds();
+
+      const basePay = parseMoney(basePayEl.value);
+      const baseFrequency = baseFreqEl.value;
+
+      const allowRows = Array.from(allowBody.querySelectorAll("tr"));
+      const allowances = [];
+      for (const r of allowRows){
+        const it = r._get();
+        const hasName = it.name.length > 0;
+        const hasAmt = it.amount && it.amount !== 0;
+        if (!hasName && !hasAmt) continue;
+        allowances.push({
+          name: hasName ? it.name : "Other allowance",
+          amount: it.amount || 0,
+          frequency: it.frequency,
+          taxable: it.taxable !== false
+        });
+      }
+
+      let deductions = [];
+      if (isAdvancedMode()){
+        const pensionMonthly = computePensionMonthly();
+        if (pensionMonthly > 0){
+          deductions.push({ name:"Employee Pension", amount: pensionMonthly, frequency:"monthly" });
+        }
+        const dedRows = Array.from(dedBody.querySelectorAll("tr")).map(tr => tr._get());
+        for (const d of dedRows){
+          if (!d.amount || d.amount <= 0) continue;
+          deductions.push({ name: d.name, amount: d.amount, frequency: d.frequency });
+        }
+      } else {
+        const monthlyDed = parseMoney(monthlyDedsEl.value);
+        if (monthlyDed > 0){
+          deductions = [{ name:"Total Monthly Deductions", amount: monthlyDed, frequency:"monthly" }];
+        }
+      }
+
+      return { basePay, baseFrequency, allowances, deductions };
     }
 
-    function saveSession(){
-      const state = getState();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      refreshSaveHint();
-      rawOut.textContent = JSON.stringify({ saved: true, key: STORAGE_KEY, at: state.meta.savedAt }, null, 2);
-      setStatus("Saved", "ok");
+    function buildSummaryText(){
+      if (!lastResult) return "No result computed yet.";
+      const d = computeDerivedKPIs(lastResult);
+
+      const mode = isAdvancedMode() ? "Advanced deductions" : "Simple deductions";
+      const basePay = parseMoney(basePayEl.value);
+      const baseFreq = baseFreqEl.value;
+
+      return [
+        "TaxIQ — PAYE Summary (Nigeria)",
+        "--------------------------------",
+        `Mode: ${mode}`,
+        `Base Pay: ₦${formatMoney(basePay)} (${baseFreq})`,
+        `Gross Annual (Base + Taxable Allowances): ₦${formatMoney(Math.round(d.gross))}`,
+        `Deductions Annualized: ₦${formatMoney(Math.round(lastResult?.breakdown?.deductionsAnnual || 0))}`,
+        `Annual Income (after deductions): ₦${formatMoney(Math.round(d.annualIncome || 0))}`,
+        `Relief Applied: ₦${formatMoney(Math.round(d.relief || 0))}`,
+        `Taxable Income: ₦${formatMoney(Math.round(d.taxableIncome || 0))}`,
+        `PAYE Annual: ₦${formatMoney(Math.round(d.paye))}`,
+        `PAYE Monthly (approx): ₦${formatMoney(Math.round(d.paye/12))}`,
+        `Net Annual (Gross − PAYE): ₦${formatMoney(Math.round(d.netAnnual))}`,
+        `Net Monthly (approx): ₦${formatMoney(Math.round(d.netMonthly))}`,
+        `Effective Tax Rate: ${(d.effRate*100).toFixed(2)}%`,
+        "",
+        "Generated by TaxIQ."
+      ].join("\n");
     }
 
-    function loadSession(){
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) throw new Error("No saved session found.");
-      const parsed = JSON.parse(raw);
-      setState(parsed);
-      refreshSaveHint();
-      rawOut.textContent = JSON.stringify({ loaded: true, key: STORAGE_KEY, savedAt: parsed?.meta?.savedAt || null }, null, 2);
-      setStatus("Loaded", "ok");
+    async function copySummary(){
+      const txt = buildSummaryText();
+      try{
+        await navigator.clipboard.writeText(txt);
+        copyHint.textContent = "Summary copied to clipboard.";
+      } catch(e){
+        copyHint.textContent = "Copy failed (browser blocked clipboard).";
+      }
     }
 
-    function clearSaved(){
-      localStorage.removeItem(STORAGE_KEY);
-      refreshSaveHint();
-      rawOut.textContent = JSON.stringify({ cleared: true, key: STORAGE_KEY }, null, 2);
-      setStatus("Cleared", "ok");
+    function downloadJSON(){
+      const exportObj = {
+        meta: { app:"TaxIQ", module:"PAYE", exportedAt: new Date().toISOString() },
+        input: lastPayload,
+        result: lastResult
+      };
+      const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type:"application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "taxiq_paye_export.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      URL.revokeObjectURL(url);
+      copyHint.textContent = "JSON downloaded.";
     }
 
-    // ---------- Event wiring ----------
+    // Formatters
     attachMoneyFormatting(basePayEl);
     attachMoneyFormatting(monthlyDedsEl);
     attachMoneyFormatting(pensionPctEl);
@@ -961,80 +982,20 @@ Author | Financial Strategy</div>
       recalcDeductionTotals();
     });
 
-    btnSave.addEventListener("click", ()=>{
-      try{ saveSession(); } catch(e){
-        setStatus("Save failed", "bad");
-        rawOut.textContent = JSON.stringify({ error: String(e?.message || e) }, null, 2);
-      }
-    });
-
-    btnLoad.addEventListener("click", ()=>{
-      try{ loadSession(); } catch(e){
-        setStatus("Load failed", "bad");
-        rawOut.textContent = JSON.stringify({ error: String(e?.message || e) }, null, 2);
-      }
-    });
-
-    btnClearSaved.addEventListener("click", ()=>{
-      try{ clearSaved(); } catch(e){
-        setStatus("Clear failed", "bad");
-        rawOut.textContent = JSON.stringify({ error: String(e?.message || e) }, null, 2);
-      }
-    });
+    btnCopy.addEventListener("click", ()=>copySummary());
+    btnDownload.addEventListener("click", ()=>downloadJSON());
 
     btnCalc.addEventListener("click", ()=>{
       try{
         setStatus("Computing…");
         validate();
 
-        recalcAllowanceTotals();
-        applyModeUI();
+        lastPayload = getPayload();
 
-        const basePay = parseMoney(basePayEl.value);
-        const baseFrequency = baseFreqEl.value;
-
-        const allowRows = Array.from(allowBody.querySelectorAll("tr"));
-        const allowances = [];
-        for (const r of allowRows){
-          const it = r._get();
-          const hasName = it.name.length > 0;
-          const hasAmt = it.amount && it.amount !== 0;
-          if (!hasName && !hasAmt) continue;
-          allowances.push({
-            name: hasName ? it.name : "Other allowance",
-            amount: it.amount || 0,
-            frequency: it.frequency,
-            taxable: it.taxable !== false
-          });
-        }
-
-        let deductions = [];
-        if (isAdvancedMode()){
-          const pensionMonthly = computePensionMonthly();
-          if (pensionMonthly > 0){
-            deductions.push({ name:"Employee Pension", amount: pensionMonthly, frequency:"monthly" });
-          }
-          const dedRows = Array.from(dedBody.querySelectorAll("tr")).map(tr => tr._get());
-          for (const d of dedRows){
-            if (!d.amount || d.amount <= 0) continue;
-            deductions.push({ name: d.name, amount: d.amount, frequency: d.frequency });
-          }
-        } else {
-          const monthlyDed = parseMoney(monthlyDedsEl.value);
-          if (monthlyDed > 0){
-            deductions = [{ name:"Total Monthly Deductions", amount: monthlyDed, frequency:"monthly" }];
-          }
-        }
-
-        const payload = { basePay, baseFrequency, allowances, deductions };
-        const result = runPAYE(payload);
+        const result = runPAYE(lastPayload);
         render(result);
         setStatus("Done", "ok");
-
-        if (autoSaveEl.checked){
-          saveSession();
-          setStatus("Done + Saved", "ok");
-        }
+        copyHint.textContent = "—";
       } catch(e){
         setStatus("Fix inputs", "bad");
         rawOut.textContent = JSON.stringify({ error: String(e?.message || e) }, null, 2);
@@ -1059,11 +1020,26 @@ Author | Financial Strategy</div>
       seedAllowanceRows();
       seedDeductionRows();
 
+      lastResult = null;
+      lastPayload = null;
+
       rawOut.textContent = "{}";
       kpiGross.textContent = "—";
       kpiGrossBreak.textContent = "—";
       kpiPayeAnnual.textContent = "—";
       kpiPayeMonthly.textContent = "—";
+
+      kpiNetAnnual.textContent = "—";
+      kpiNetAnnualSub.textContent = "—";
+      kpiNetMonthly.textContent = "—";
+      kpiNetMonthlySub.textContent = "—";
+
+      kpiAnnualIncome.textContent = "—";
+      kpiRelief.textContent = "—";
+      kpiTaxableIncome.textContent = "—";
+      kpiEffRate.textContent = "—";
+
+      copyHint.textContent = "—";
       setStatus("Ready");
 
       recalcAllowanceTotals();
@@ -1080,17 +1056,6 @@ Author | Financial Strategy</div>
     recalcDeductionTotals();
     applyModeUI();
     updateAnnualDeds();
-    refreshSaveHint();
-
-    // Attempt gentle auto-load if saved exists (does not override a typed session)
-    // Only auto-load if basePay is empty AND a saved session exists.
-    try{
-      if (!basePayEl.value && hasSaved()){
-        loadSession();
-      }
-    } catch {
-      // ignore
-    }
   </script>
 </body>
 </html>
