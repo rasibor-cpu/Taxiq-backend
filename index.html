@@ -176,11 +176,26 @@
       display:flex;
       gap:10px;
       flex-wrap:wrap;
-      align-items:center;
+      align-items:flex-end;
       margin-top:10px;
       padding-top:10px;
       border-top:1px solid var(--line);
     }
+
+    .statusBadge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      font-size:12px;
+      color:var(--muted);
+      margin-left:auto;
+    }
+    .statusBadge.ok{color:var(--ok)}
+    .statusBadge.bad{color:var(--danger)}
   </style>
 </head>
 
@@ -191,7 +206,7 @@
         <h1>TaxIQ — Tax Calculator</h1>
         <div class="sub">
           PAYE module: annualized earnings profile = base pay + taxable allowances − annualized deductions.<br/>
-          Output focus: tax liability for a selected reporting period (Monthly / Quarterly / Annual).
+          End-of-period output: tax liability for reporting period + reconciliation vs tax already withheld.
         </div>
       </div>
       <div class="sig">Robert Asibor
@@ -354,7 +369,7 @@ Author | Financial Strategy</div>
         <h2>Results <span class="pill" id="statusPill">Ready</span></h2>
 
         <div class="periodbar">
-          <div class="field" style="flex:1 1 240px; margin:0;">
+          <div class="field" style="flex:1 1 220px; margin:0;">
             <label>Reporting Period</label>
             <select id="reportPeriod">
               <option value="monthly" selected>Monthly</option>
@@ -363,7 +378,14 @@ Author | Financial Strategy</div>
             </select>
             <div class="hint">Tax is computed annually and scaled for the selected period.</div>
           </div>
-          <span class="tiny" id="periodHint">—</span>
+
+          <div class="field" style="flex:1 1 240px; margin:0;">
+            <label>Tax Already Withheld (for selected period)</label>
+            <input id="taxWithheld" class="money" type="text" inputmode="numeric" placeholder="e.g., 150,000" />
+            <div class="hint">Enter PAYE already deducted for this reporting period.</div>
+          </div>
+
+          <span class="statusBadge" id="reconBadge">Reconciliation: —</span>
         </div>
 
         <div class="kpis">
@@ -386,9 +408,9 @@ Author | Financial Strategy</div>
           </div>
 
           <div class="kpi">
-            <div class="t">Net for Reporting Period</div>
-            <div class="v" id="kpiNetPeriod">—</div>
-            <div class="s" id="kpiNetPeriodSub">—</div>
+            <div class="t">Balance Payable / (Overpaid)</div>
+            <div class="v" id="kpiBalance">—</div>
+            <div class="s" id="kpiBalanceSub">—</div>
           </div>
         </div>
 
@@ -464,7 +486,8 @@ Author | Financial Strategy</div>
     const statusPill = document.getElementById("statusPill");
 
     const reportPeriodEl = document.getElementById("reportPeriod");
-    const periodHint = document.getElementById("periodHint");
+    const taxWithheldEl = document.getElementById("taxWithheld");
+    const reconBadge = document.getElementById("reconBadge");
 
     const kpiGross = document.getElementById("kpiGross");
     const kpiGrossBreak = document.getElementById("kpiGrossBreak");
@@ -473,8 +496,8 @@ Author | Financial Strategy</div>
 
     const kpiPayePeriod = document.getElementById("kpiPayePeriod");
     const kpiPayePeriodSub = document.getElementById("kpiPayePeriodSub");
-    const kpiNetPeriod = document.getElementById("kpiNetPeriod");
-    const kpiNetPeriodSub = document.getElementById("kpiNetPeriodSub");
+    const kpiBalance = document.getElementById("kpiBalance");
+    const kpiBalanceSub = document.getElementById("kpiBalanceSub");
 
     const kpiAnnualIncome = document.getElementById("kpiAnnualIncome");
     const kpiRelief = document.getElementById("kpiRelief");
@@ -806,18 +829,18 @@ Author | Financial Strategy</div>
       return null;
     }
 
-    function getPeriodFactor(){
-      const p = reportPeriodEl.value;
-      if (p === "quarterly") return 1/4;
-      if (p === "annual") return 1;
-      return 1/12; // monthly default
-    }
-
     function periodLabel(){
       const p = reportPeriodEl.value;
       if (p === "quarterly") return "Quarter";
       if (p === "annual") return "Year";
       return "Month";
+    }
+
+    function periodFactor(){
+      const p = reportPeriodEl.value;
+      if (p === "quarterly") return 1/4;
+      if (p === "annual") return 1;
+      return 1/12;
     }
 
     function computeDerived(result){
@@ -830,21 +853,24 @@ Author | Financial Strategy</div>
 
       const effRate = grossAnnual > 0 ? (payeAnnual / grossAnnual) : 0;
 
-      const factor = getPeriodFactor();
-      const grossPeriod = grossAnnual * factor;
-      const payePeriod = payeAnnual * factor;
-      const netPeriod = Math.max(0, grossPeriod - payePeriod);
+      const f = periodFactor();
+      const grossPeriod = grossAnnual * f;
+      const payePeriod = payeAnnual * f;
 
-      return { grossAnnual, payeAnnual, annualIncome, relief, taxableIncome, effRate, factor, grossPeriod, payePeriod, netPeriod };
+      const withheld = parseMoney(taxWithheldEl.value);
+      const balance = payePeriod - withheld; // + => payable, - => overpaid
+
+      return { grossAnnual, payeAnnual, annualIncome, relief, taxableIncome, effRate, grossPeriod, payePeriod, withheld, balance };
     }
 
-    function renderPeriodKPIs(){
+    function renderReconciliation(){
       if (!lastResult){
+        reconBadge.textContent = "Reconciliation: —";
+        reconBadge.classList.remove("ok","bad");
         kpiPayePeriod.textContent = "—";
         kpiPayePeriodSub.textContent = "—";
-        kpiNetPeriod.textContent = "—";
-        kpiNetPeriodSub.textContent = "—";
-        periodHint.textContent = "Select Monthly / Quarterly / Annual to view period liability.";
+        kpiBalance.textContent = "—";
+        kpiBalanceSub.textContent = "—";
         return;
       }
 
@@ -852,12 +878,30 @@ Author | Financial Strategy</div>
       const label = periodLabel();
 
       kpiPayePeriod.textContent = "₦ " + formatMoney(Math.round(d.payePeriod));
-      kpiPayePeriodSub.textContent = `Annual PAYE ₦${formatMoney(Math.round(d.payeAnnual))} scaled to ${label.toLowerCase()}`;
+      kpiPayePeriodSub.textContent = `Scaled annual PAYE ₦${formatMoney(Math.round(d.payeAnnual))} to ${label.toLowerCase()}`;
 
-      kpiNetPeriod.textContent = "₦ " + formatMoney(Math.round(d.netPeriod));
-      kpiNetPeriodSub.textContent = `${label} gross ₦${formatMoney(Math.round(d.grossPeriod))} − ${label} PAYE ₦${formatMoney(Math.round(d.payePeriod))}`;
+      const bal = d.balance;
+      const absBal = Math.abs(bal);
 
-      periodHint.textContent = `Currently showing: ${label} liability (annual values are still shown for reference).`;
+      if (absBal < 0.5){
+        reconBadge.textContent = "Reconciliation: Settled";
+        reconBadge.classList.remove("bad");
+        reconBadge.classList.add("ok");
+        kpiBalance.textContent = "₦ 0";
+        kpiBalanceSub.textContent = `${label} PAYE ₦${formatMoney(Math.round(d.payePeriod))} − Withheld ₦${formatMoney(Math.round(d.withheld))}`;
+      } else if (bal > 0){
+        reconBadge.textContent = "Reconciliation: Balance Payable";
+        reconBadge.classList.remove("ok");
+        reconBadge.classList.add("bad");
+        kpiBalance.textContent = "₦ " + formatMoney(Math.round(absBal));
+        kpiBalanceSub.textContent = `Payable = ${label} PAYE ₦${formatMoney(Math.round(d.payePeriod))} − Withheld ₦${formatMoney(Math.round(d.withheld))}`;
+      } else {
+        reconBadge.textContent = "Reconciliation: Overpaid (Refund)";
+        reconBadge.classList.remove("bad");
+        reconBadge.classList.add("ok");
+        kpiBalance.textContent = "₦ " + formatMoney(Math.round(absBal));
+        kpiBalanceSub.textContent = `Overpaid = Withheld ₦${formatMoney(Math.round(d.withheld))} − ${label} PAYE ₦${formatMoney(Math.round(d.payePeriod))}`;
+      }
     }
 
     function render(result){
@@ -893,7 +937,7 @@ Author | Financial Strategy</div>
       const pct = (d.effRate * 100);
       kpiEffRate.textContent = (Number.isFinite(pct) ? pct.toFixed(2) : "0.00") + "%";
 
-      renderPeriodKPIs();
+      renderReconciliation();
     }
 
     function validate(){
@@ -960,21 +1004,29 @@ Author | Financial Strategy</div>
 
       const d = computeDerived(lastResult);
       const label = periodLabel();
-
       const mode = isAdvancedMode() ? "Advanced deductions" : "Simple deductions";
+
       const basePay = parseMoney(basePayEl.value);
       const baseFreq = baseFreqEl.value;
 
+      const bal = d.balance;
+      const absBal = Math.abs(bal);
+      const reconLine =
+        absBal < 0.5 ? "Reconciliation: Settled" :
+        bal > 0 ? `Balance Payable: ₦${formatMoney(Math.round(absBal))}` :
+                  `Overpaid (Refund): ₦${formatMoney(Math.round(absBal))}`;
+
       return [
-        "TaxIQ — PAYE Summary (Nigeria)",
-        "--------------------------------",
+        "TaxIQ — PAYE Period-End Summary (Nigeria)",
+        "-----------------------------------------",
         `Reporting Period: ${label}`,
         `Mode: ${mode}`,
         `Base Pay: ₦${formatMoney(basePay)} (${baseFreq})`,
-        `Gross Annual (Base + Taxable Allowances): ₦${formatMoney(Math.round(d.grossAnnual))}`,
+        "",
         `PAYE Annual: ₦${formatMoney(Math.round(d.payeAnnual))}`,
         `PAYE per ${label}: ₦${formatMoney(Math.round(d.payePeriod))}`,
-        `Net per ${label}: ₦${formatMoney(Math.round(d.netPeriod))}`,
+        `Tax Withheld (this ${label}): ₦${formatMoney(Math.round(d.withheld))}`,
+        reconLine,
         "",
         `Annual Income (after deductions): ₦${formatMoney(Math.round(d.annualIncome || 0))}`,
         `Relief Applied: ₦${formatMoney(Math.round(d.relief || 0))}`,
@@ -999,6 +1051,7 @@ Author | Financial Strategy</div>
       const exportObj = {
         meta: { app:"TaxIQ", module:"PAYE", exportedAt: new Date().toISOString() },
         reportingPeriod: reportPeriodEl.value,
+        withheld: parseMoney(taxWithheldEl.value),
         input: lastPayload,
         result: lastResult
       };
@@ -1020,6 +1073,7 @@ Author | Financial Strategy</div>
     attachMoneyFormatting(basePayEl);
     attachMoneyFormatting(monthlyDedsEl);
     attachMoneyFormatting(pensionPctEl);
+    attachMoneyFormatting(taxWithheldEl);
 
     monthlyDedsEl.addEventListener("input", updateAnnualDeds);
 
@@ -1035,7 +1089,12 @@ Author | Financial Strategy</div>
     });
 
     reportPeriodEl.addEventListener("change", ()=>{
-      renderPeriodKPIs();
+      renderReconciliation();
+    });
+
+    taxWithheldEl.addEventListener("input", ()=>{
+      formatInputWithCommas(taxWithheldEl);
+      renderReconciliation();
     });
 
     btnAddRow.addEventListener("click", ()=>{
@@ -1083,6 +1142,11 @@ Author | Financial Strategy</div>
       pensionPctEl.value = "8";
       pensionMonthlyEl.value = "";
 
+      reportPeriodEl.value = "monthly";
+      taxWithheldEl.value = "";
+      reconBadge.textContent = "Reconciliation: —";
+      reconBadge.classList.remove("ok","bad");
+
       seedAllowanceRows();
       seedDeductionRows();
 
@@ -1097,9 +1161,8 @@ Author | Financial Strategy</div>
 
       kpiPayePeriod.textContent = "—";
       kpiPayePeriodSub.textContent = "—";
-      kpiNetPeriod.textContent = "—";
-      kpiNetPeriodSub.textContent = "—";
-      periodHint.textContent = "Select Monthly / Quarterly / Annual to view period liability.";
+      kpiBalance.textContent = "—";
+      kpiBalanceSub.textContent = "—";
 
       kpiAnnualIncome.textContent = "—";
       kpiRelief.textContent = "—";
@@ -1123,7 +1186,7 @@ Author | Financial Strategy</div>
     recalcDeductionTotals();
     applyModeUI();
     updateAnnualDeds();
-    renderPeriodKPIs();
+    renderReconciliation();
   </script>
 </body>
 </html>
